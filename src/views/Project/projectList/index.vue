@@ -32,10 +32,10 @@ export default defineComponent({
   setup () {
     // const tableData = ref([])
     const tableData = [
-      { name: '岳阳市财政数据中心', status: '已完成', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '10604.1' },
-      { name: '临湘市财政数据中心', status: '待付款', createDate: '2022年1月24日', product: '', owner: '何晋华', amount: '20000.00' },
-      { name: '郴州市云核算', status: '待付款', createDate: '2022年1月24日', product: '', owner: '曾武本', amount: '20030.01' },
-      { name: '衡山县财政数据中心', status: '已废止', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '20063.01' }
+      { id: 1, name: '岳阳市财政数据中心', status: '已完成', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '10604.1' },
+      { id: 2, name: '临湘市财政数据中心', status: '待付款', createDate: '2022年1月24日', product: '', owner: '何晋华', amount: '20000.00' },
+      { id: 3, name: '郴州市云核算', status: '待付款', createDate: '2022年1月24日', product: '', owner: '曾武本', amount: '20030.01' },
+      { id: 4, name: '衡山县财政数据中心', status: '已废止', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '20063.01' }
     ]
 
     /*
@@ -44,7 +44,7 @@ export default defineComponent({
      */
     function detailClick (row: any) {
       console.log(row)
-      return '/project/details?' + row.name
+      return '/project/details?' + row.id
     }
 
     return {
