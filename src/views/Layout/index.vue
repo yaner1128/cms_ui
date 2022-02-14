@@ -70,7 +70,7 @@ export default defineComponent({
   height: 100vh;
 }
 .el-aside{
-  width: 200px;
+  width: 220px;
   border-right: 1px solid #eee;
   .title{
     width: 100%;
