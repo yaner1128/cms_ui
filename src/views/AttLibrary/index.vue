@@ -30,12 +30,20 @@ export default defineComponent({
       { id: 1, date: '2016-05-04', name: 'xx销售合同', product: '衡山', fileType: '销售合同', product2: '会计云核算-衡山县财政局-软件代理销售', enclosureType: 'PDF' },
       { id: 1, date: '2016-05-05', name: 'xx验收清单', product: '衡山', fileType: '验收清单', product2: '会计云核算-衡山县财政局-软件代理销售', enclosureType: 'PDF' }
     ]
-
+    interface typeRow{
+      id: string
+      date: string
+      name: string
+      product: string
+      fileType: string
+      product2: string
+      enclosureType: string
+    }
     /*
      * 查看详情
      * row: 当前行数据
      */
-    function detailClick (row: any) {
+    function detailClick (row: typeRow) {
       return '/project/details?' + row.id
     }
 

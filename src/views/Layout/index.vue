@@ -4,7 +4,7 @@
       <el-aside>
         <el-scrollbar>
           <div class="title">
-            得水-合同管理系统
+            得水-项目管理系统
           </div>
           <el-menu default-active="/home" :unique-opened="true" router>
             <el-menu-item index="/home">主页</el-menu-item>

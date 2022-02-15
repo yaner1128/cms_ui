@@ -117,8 +117,8 @@ export default defineComponent({
     /*
      *  筛选方法
     */
-    const DateList: any[] = []
-    const temp: any[] = []
+    const DateList: unknown[] = []
+    const temp: unknown[] = []
     purchaseData.forEach(item => {
       if (!temp.includes(item.date)) {
         temp.push(item.date)

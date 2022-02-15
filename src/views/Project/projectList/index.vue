@@ -38,11 +38,20 @@ export default defineComponent({
       { id: 4, name: '衡山县财政数据中心', status: '已废止', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '20063.01' }
     ]
 
+    interface rowType{
+      id: string
+      name: string
+      status: string
+      createDate: string
+      product: string
+      owner: string
+      amount: string
+    }
     /*
      * 查看详情
      * row: 当前行数据
      */
-    function detailClick (row: any) {
+    function detailClick (row: rowType) {
       return '/project/details?' + row.id
     }
 
