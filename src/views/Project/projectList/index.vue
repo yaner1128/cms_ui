@@ -24,10 +24,10 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'Home',
+  name: 'projectList',
   components: {},
   setup () {
     // const tableData = ref([])
@@ -43,7 +43,6 @@ export default defineComponent({
      * row: 当前行数据
      */
     function detailClick (row: any) {
-      console.log(row)
       return '/project/details?' + row.id
     }
 

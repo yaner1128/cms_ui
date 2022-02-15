@@ -25,9 +25,6 @@
         <el-header style="text-align: right; font-size: 12px">
           <div class="toolbar">
             <el-dropdown>
-              <el-icon style="margin-right: 8px; margin-top: 1px"
-                ><setting
-              /></el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item>View</el-dropdown-item>
@@ -51,10 +48,10 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, ref } from 'vue'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'Home',
+  name: 'Layout',
   components: {},
   setup () {
     return {}

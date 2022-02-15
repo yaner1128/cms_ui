@@ -61,7 +61,7 @@ const routes: Array<RouteRecordRaw> = [
     component: Layout,
     children: [
       {
-        path: '/System/setting',
+        path: 'setting',
         component: () => import('@/views/System/index.vue')
       }
     ]
