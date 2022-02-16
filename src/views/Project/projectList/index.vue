@@ -15,8 +15,8 @@
       <el-table-column prop="amount" label="收款额" />
       <el-table-column label="操作">
         <template #default="scope">
-          <router-link class="link" :to="detailClick(scope.row)">查看</router-link>
-          <router-link class="link" :to="detailClick(scope.row)">编辑</router-link>
+          <router-link class="link" :to="detailClick(scope.row,'false')">查看</router-link>
+          <router-link class="link" :to="detailClick(scope.row,'true')">编辑</router-link>
         </template>
       </el-table-column>
     </el-table>
@@ -51,8 +51,8 @@ export default defineComponent({
      * 查看详情
      * row: 当前行数据
      */
-    function detailClick (row: rowType) {
-      return '/project/details?' + row.id
+    function detailClick (row: rowType, flag: string) {
+      return `/project/details?flag=${flag}&id=${row.id}`
     }
 
     return {
