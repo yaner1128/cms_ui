@@ -1,3 +1,5 @@
+/* eslint-disable handle-callback-err */
+/* eslint-disable handle-callback-err */
 <template>
   <div class='attLibrary'>
     <el-table :data="tableData" border>
@@ -34,8 +36,16 @@
             <el-option label="图片" value="图片"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="附件" prop="name" class="annexItem">
-          <el-upload ref="uploadRef" class="upload-demo" drag :auto-upload="false" action="https://jsonplaceholder.typicode.com/posts/">
+        <el-form-item label="附件" prop="fileList" class="annexItem">
+          <el-upload
+            class="upload"
+            ref="uploadPerson"
+            drag
+            :action="action"
+            :fileList="fileList"
+            :on-success="uploadSuccess"
+            :on-error="uploadError"
+            :auto-upload="false">
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
             <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
             <template #tip>
@@ -47,7 +57,7 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitUpload()">确认</el-button>
+          <el-button type="primary" @click="submitUpload">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -57,11 +67,14 @@
 <script lang='ts'>
 import { defineComponent, ref } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
-import type { ElUpload } from 'element-plus'
+import { ElMessage, ElUpload } from 'element-plus'
 
+const fileList = ref([])
+const editForm: any = ref({})
 const dialogFormVisible = ref(false)
 const uploadRef = ref<InstanceType<typeof ElUpload>>()
 const submitUpload = () => {
+  console.log(editForm)
   uploadRef.value!.submit()
   dialogFormVisible.value = false
 }
@@ -89,22 +102,32 @@ export default defineComponent({
      * row: 当前行数据
      */
     const annexClick = (row: typeRow) => {
-      console.log(row)
+      console.log('查看', row)
     }
     /**
      * 编辑
      **/
-    const editForm = ref({
-      name: '', product: '', fileType: '', product2: '', enclosureType: ''
-    })
+    const action = process.env.VUE_APP_BASE_API + '/api/personInfo/batchAdd'
     const editClick = (row: typeRow) => {
       editForm.value = Object.assign({}, row)
       dialogFormVisible.value = true
-      console.log(editForm)
+    }
+    const uploadSuccess = (response: { code: number; message: string }, file: any, fileList: any) => {
+      console.log(file, fileList)
+      if (response.code === 200) {
+        ElMessage.success('上传成功')
+        dialogFormVisible.value = false
+      } else {
+        ElMessage.warning(response.message + '！')
+      }
+    }
+    const uploadError = (error: any, file: any, fileList: any) => {
+      console.log(error, file, fileList)
+      ElMessage.warning('导入失败!')
     }
 
     return {
-      tableData, annexClick, editClick, dialogFormVisible, editForm, submitUpload
+      tableData, annexClick, editClick, dialogFormVisible, editForm, fileList, action, submitUpload, uploadSuccess, uploadError
     }
   }
 })

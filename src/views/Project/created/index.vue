@@ -63,7 +63,6 @@
 <script lang='ts'>
 import { defineComponent, reactive, ref } from 'vue'
 import { getOwnerList, regionList, getProductList } from '@/api/optionList'
-import router from '@/router'
 
 const rules = reactive({
   name: [
