@@ -6,13 +6,19 @@
           <div class="title">
             得水-项目管理系统
           </div>
-          <el-menu :default-active="routerCur" :unique-opened="true" router @select="selectMenu">
+          <el-menu
+            background-color="#001529"
+            text-color="#fff"
+            active-text-color="#ffd04b"
+            default-active="/home"
+            :unique-opened="true" router
+            @select="selectMenu"
+          >
             <el-menu-item index="/home">主页</el-menu-item>
             <el-sub-menu index="/project">
               <template #title>项目总览</template>
               <el-menu-item index="/project/projectList">项目列表</el-menu-item>
               <el-menu-item index="/project/created">新建项目</el-menu-item>
-              <el-menu-item index="/project/details">项目详情</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/AttLibrary">附件库</el-menu-item>
             <el-menu-item index="/System/setting">系统设置</el-menu-item>
@@ -24,6 +30,11 @@
       <el-container>
         <el-header>
           <div class="toolbar">
+            <el-breadcrumb separator="/">
+              <el-breadcrumb-item :to="{ path: '/home' }">主页</el-breadcrumb-item>
+              <el-breadcrumb-item>promotion list</el-breadcrumb-item>
+              <el-breadcrumb-item>promotion detail</el-breadcrumb-item>
+            </el-breadcrumb>
             <div class="userName">{{ userName }} {{ currentDataName() }}好!</div>
             <el-dropdown>
               <div class="ava">
@@ -32,7 +43,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item>
-                    <router-link to="/login">退出登录</router-link>
+                    <router-link to="/login" replace>退出登录</router-link>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -42,7 +53,9 @@
 
         <el-main>
           <el-scrollbar>
-            <router-view></router-view>
+            <div class="container_box">
+              <router-view></router-view>
+            </div>
           </el-scrollbar>
         </el-main>
       </el-container>
@@ -98,19 +111,32 @@ a{
   all: unset;
 }
 .el-main{
-  padding-top: 0;
+  padding:5px 10px 0;
+  background-color: #f0f0f0;
+  .scrollbar{
+    background-color: #fff;
+  }
+  .container_box{
+    background-color: #fff;
+    padding: 10px;
+  }
 }
 .el-header{
-  height: 50px;
+  height: 45px;
   font-size: 14px;
   line-height: 50px;
-  // border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 5px;
+  box-shadow: 1px 0px 10px #999;
   .toolbar{
     height: 100%;
     width: 100%;
     overflow: hidden;
     display: flex;
     justify-content: flex-end;
+    .el-breadcrumb{
+      flex: 1 0 50%;
+      line-height: 35px;
+    }
   }
   .breadcrumb{
     flex: 1 0 50%;
@@ -125,7 +151,7 @@ a{
     padding: 0 10px;
   }
   img{
-    width: 40px;
+    width: 35px;
     padding: 5px 0;
   }
 }
@@ -133,20 +159,21 @@ a{
   height: 100vh;
 }
 .el-aside{
-  width: 220px;
+  width: 240px;
   border-right: 1px solid #eee;
+  background: #001529;
+  color: #fff;
   .title{
     width: 100%;
     height: 40px;
     font-size: 18px;
-    color: #000;
     font-weight: 600;
     text-align: center;
     line-height: 40px;
   }
   .el-menu{
     height: calc(100vh - 40px);
-    background-color: #fff;
+    // background-color: #fff;
   }
 }
 

@@ -110,7 +110,7 @@ export default defineComponent({
       amount: string
     }
     function detailClick (row: typeWorkbench) {
-      return '/project/details?' + row.id
+      return '/project/details?id=' + row.id
     }
     let myChart: any
     let myChart2: any

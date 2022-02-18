@@ -2,7 +2,7 @@ import axios from 'axios'
 // 创建axios实例
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, // api 的 base_url
-  timeout: 1000 // 请求超时时间
+  timeout: 3000 // 请求超时时间
 })
 // 添加请求拦截器
 service.interceptors.request.use(function (config) {
