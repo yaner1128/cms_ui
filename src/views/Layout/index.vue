@@ -10,9 +10,9 @@
             background-color="#001529"
             text-color="#fff"
             active-text-color="#ffd04b"
-            default-active="/home"
-            :unique-opened="true" router
-            @select="selectMenu"
+            :default-active="routerCur"
+            :unique-opened="true"
+            router
           >
             <el-menu-item index="/home">主页</el-menu-item>
             <el-sub-menu index="/project">
@@ -38,8 +38,8 @@
           <div class="toolbar">
             <el-breadcrumb separator="/">
               <el-breadcrumb-item :to="{ path: '/home' }">主页</el-breadcrumb-item>
-              <el-breadcrumb-item>promotion list</el-breadcrumb-item>
-              <el-breadcrumb-item>promotion detail</el-breadcrumb-item>
+              <el-breadcrumb-item v-for="(item,index) in breadcrumbList" :key="index" :to="{path: item.path}">{{ item.name }}</el-breadcrumb-item>
+              <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->
             </el-breadcrumb>
             <div class="userName">{{ userName }} {{ currentDataName() }}好!</div>
             <el-dropdown>
@@ -79,10 +79,14 @@ export default defineComponent({
   computed: {
     routerCur () {
       return router.currentRoute.value.path
+    },
+    breadcrumbList () {
+      return router.currentRoute.value.matched.filter((item) => {
+        return item.name && item.name !== '主页'
+      })
     }
   },
   setup () {
-    console.log('router', router)
     function currentDataName () {
       const curHour = new Date().getHours()
       if (curHour <= 8) {
@@ -96,14 +100,13 @@ export default defineComponent({
       }
     }
     const userName = 'admin'
-
-    function selectMenu (index: string, indexPath: any) {
-      console.log(index, indexPath)
-      console.log('currentRoute', router.currentRoute.value.matched)
-    }
+    // function selectMenu (index: string, indexPath: any) {
+    //   console.log(index, indexPath)
+    //   console.log('currentRoute', router.currentRoute.value.matched)
+    // }
 
     return {
-      currentDataName, userName, selectMenu
+      currentDataName, userName
     }
   }
 })
@@ -130,7 +133,7 @@ a{
 .el-header{
   height: 45px;
   font-size: 14px;
-  line-height: 50px;
+  line-height: 45px;
   margin-bottom: 5px;
   box-shadow: 1px 0px 10px #999;
   .toolbar{
@@ -141,7 +144,7 @@ a{
     justify-content: flex-end;
     .el-breadcrumb{
       flex: 1 0 50%;
-      line-height: 35px;
+      line-height: 45px;
     }
   }
   .breadcrumb{

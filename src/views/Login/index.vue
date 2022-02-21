@@ -49,7 +49,6 @@ export default defineComponent({
       refForm.value.validate((valid:boolean) => {
         if (valid) {
           // 校验成功
-          console.log(loginForm)
           router.push('/home')
         }
       })

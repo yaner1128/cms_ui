@@ -145,7 +145,6 @@ export default defineComponent({
     ])
     const createdRole = ref('')
     const addRoleClick = () => {
-      console.log(createdRole.value)
       innerVisible.value = false
       createdRole.value = ''
     }

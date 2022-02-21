@@ -74,7 +74,6 @@ export default defineComponent({
     const dateChange = (val: any) => {
       formInline.startDate = val[0]
       formInline.endDate = val[1]
-      console.log(val)
     }
     const search = () => {
       console.log(formInline)

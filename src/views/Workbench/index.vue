@@ -114,7 +114,6 @@ export default defineComponent({
     }
     let myChart: any
     let myChart2: any
-    console.log(myChart)
     const init = () => {
       var chartDom = document.getElementById('barBoxOne')
       var chartDom2 = document.getElementById('barBoxTwo')

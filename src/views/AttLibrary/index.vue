@@ -74,7 +74,6 @@ const editForm: any = ref({})
 const dialogFormVisible = ref(false)
 const uploadRef = ref<InstanceType<typeof ElUpload>>()
 const submitUpload = () => {
-  console.log(editForm)
   uploadRef.value!.submit()
   dialogFormVisible.value = false
 }
@@ -113,7 +112,6 @@ export default defineComponent({
       dialogFormVisible.value = true
     }
     const uploadSuccess = (response: { code: number; message: string }, file: any, fileList: any) => {
-      console.log(file, fileList)
       if (response.code === 200) {
         ElMessage.success('上传成功')
         dialogFormVisible.value = false

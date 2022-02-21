@@ -131,7 +131,6 @@ export default defineComponent({
       })
     }
     const reset = () => {
-      console.log(form)
       form.value = reactive({
         name: '',
         type: '',

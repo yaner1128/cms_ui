@@ -64,6 +64,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/System',
     redirect: '/System/role',
+    name: '系统设置',
     component: Layout,
     children: [
       {
