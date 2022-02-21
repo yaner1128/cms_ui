@@ -71,7 +71,9 @@
 
 <script lang='ts'>
 import router from '@/router'
-import { defineComponent, ref } from 'vue'
+// import axios from 'axios'
+import { defineComponent, onMounted } from 'vue'
+import { getDetails } from '@/api/details'
 
 export default defineComponent({
   name: 'Layout',
@@ -87,6 +89,12 @@ export default defineComponent({
     }
   },
   setup () {
+    getDetails({}).then(res => {
+      console.log('*********', res)
+    }).catch(rep => {
+      console.log(rep)
+    })
+
     function currentDataName () {
       const curHour = new Date().getHours()
       if (curHour <= 8) {

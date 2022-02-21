@@ -4,6 +4,7 @@ import router from './router'
 import store from './store'
 
 import axios from 'axios'
+import './mock'
 
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'

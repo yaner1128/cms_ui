@@ -96,6 +96,7 @@ interface paymentPlanType {
 
 const getData = async (query: any, stepList: stepListType[], detailList: detailListType[], purchaseData: purchaseDataType[], paymentPlan: paymentPlanType[]) => {
   const res = await getDetails(query)
+  console.log('*********', res)
   const data = {
     stepList: [
       { title: '立项', description: '中标日期: 2022年1月24日\n合同日期: 2022年1月24日', desc1: '中标日期: 2022年1月24日', desc2: '合同日期: 2022年1月24日' },
