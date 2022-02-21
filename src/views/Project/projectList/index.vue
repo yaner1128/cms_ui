@@ -22,7 +22,14 @@
         </el-date-picker>
       </el-form-item>
       <el-form-item>
+        <el-input v-model="formInline.product" placeholder="请输入产品名称"></el-input>
+      </el-form-item>
+      <el-form-item>
+        <el-input v-model="formInline.owner" placeholder="请输入责任人"></el-input>
+      </el-form-item>
+      <el-form-item>
         <el-button type="primary" @click="search">搜索</el-button>
+        <el-button type="success">重置</el-button>
       </el-form-item>
     </el-form>
     <!-- 表格 -->
@@ -65,6 +72,8 @@ export default defineComponent({
       owner: ''
     })
     const dateChange = (val: any) => {
+      formInline.startDate = val[0]
+      formInline.endDate = val[1]
       console.log(val)
     }
     const search = () => {

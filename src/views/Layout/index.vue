@@ -21,7 +21,13 @@
               <el-menu-item index="/project/created">新建项目</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/AttLibrary">附件库</el-menu-item>
-            <el-menu-item index="/System/setting">系统设置</el-menu-item>
+            <!-- <el-menu-item index="/System/setting">系统设置</el-menu-item> -->
+            <el-sub-menu index="/System">
+              <template #title>系统设置</template>
+              <el-menu-item index="/System/role">角色管理</el-menu-item>
+              <el-menu-item index="/System/user">用户管理</el-menu-item>
+              <el-menu-item index="/System/permission">权限管理</el-menu-item>
+            </el-sub-menu>
             <el-menu-item index="/Workbench">工作台</el-menu-item>
           </el-menu>
         </el-scrollbar>

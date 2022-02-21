@@ -63,13 +63,23 @@ const routes: Array<RouteRecordRaw> = [
   // 系统设置
   {
     path: '/System',
-    redirect: '/System/setting',
+    redirect: '/System/role',
     component: Layout,
     children: [
       {
-        path: 'setting',
-        name: '系统设置',
-        component: () => import('@/views/System/index.vue')
+        path: 'user',
+        name: '用户管理',
+        component: () => import('@/views/System/User/index.vue')
+      },
+      {
+        path: 'role',
+        name: '角色管理',
+        component: () => import('@/views/System/Role/index.vue')
+      },
+      {
+        path: 'permission',
+        name: '权限管理',
+        component: () => import('@/views/System/Permission/index.vue')
       }
     ]
   },

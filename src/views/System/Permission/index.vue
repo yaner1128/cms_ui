@@ -1,6 +1,6 @@
 <template>
   <div class='login'>
-    系统设置
+    权限管理
   </div>
 </template>
 
