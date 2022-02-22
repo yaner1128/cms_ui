@@ -17,25 +17,26 @@
           <el-input v-model="createForm.name" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="角色代码">
-          <el-input v-model="createForm.name" autocomplete="off"></el-input>
+          <el-input v-model="createForm.code" autocomplete="off"></el-input>
         </el-form-item>
         <el-form-item label="角色级别">
           <el-input-number v-model="createForm.level" :min="1" controls-position="right" />
         </el-form-item>
         <el-form-item label="数据范围">
-          <el-select v-model="createForm.region" placeholder="Please select a zone">
-            <el-option label="Zone No.1" value="shanghai"></el-option>
-            <el-option label="Zone No.2" value="beijing"></el-option>
+          <el-select v-model="createForm.permission" placeholder="Please select a zone">
+            <el-option label="范围1" value="范围1"></el-option>
+            <el-option label="范围2" value="范围2"></el-option>
+            <el-option label="范围3" value="范围3"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="描述信息">
-          <el-input v-model="createForm.name" autocomplete="off"></el-input>
+          <el-input v-model="createForm.desc" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="dialogFormVisible = false">取消</el-button>
-          <el-button type="primary" @click="dialogFormVisible = false">确认</el-button>
+          <el-button type="primary" @click="commitClick">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -43,7 +44,7 @@
       <div class="left">
         <div class="title">角色列表</div>
         <div class="box">
-          <el-table :data="roleData">
+          <el-table v-loading="loading" :data="roleData">
             <el-table-column prop="name" label="名称"  />
             <el-table-column prop="code" label="角色代码"  />
             <el-table-column prop="permission" label="数据权限" />
@@ -79,86 +80,117 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, ref } from 'vue'
+import { defineComponent, reactive, ref } from 'vue'
+import { getAllRoleList } from '@/api/userList'
 
-const treeData = [
-  {
-    id: 1,
-    label: '主页'
-  },
-  {
-    id: 2,
-    label: '项目总览',
-    children: [
-      {
-        id: 5,
-        label: '项目列表'
-      },
-      {
-        id: 6,
-        label: '新建项目'
-      }
-    ]
-  },
-  {
-    id: 3,
-    label: '附件库'
-  },
-  {
-    id: 3,
-    label: '系统设置',
-    children: [
-      {
-        id: 5,
-        label: '角色管理'
-      },
-      {
-        id: 6,
-        label: '权限管理'
-      }
-    ]
-  },
-  {
-    id: 3,
-    label: '工作台'
-  }
-]
+interface roleRowType {
+  name: string
+  code: string
+  permission: string
+  level: string
+  desc:string
+  createDate:string
+}
 export default defineComponent({
   name: 'System',
   components: {},
   setup () {
-    const roleData = ref([{ name: 123 }])
-
+    // 表单
     const formInline = ref({
       name: ''
     })
+    // 查询表格数据
+    const loading = ref(false)
+    const roleData: any = reactive([])
+    const getData = () => {
+      loading.value = true
+      const params = Object.assign({}, formInline.value)
+      getAllRoleList(params).then(res => {
+        roleData.splice(0, roleData.length, ...res.data[0].data.data)
+        console.log(roleData)
+        loading.value = false
+      })
+    }
+    getData()
+    // 点击查询
     const searchData = () => {
       console.log(formInline.value)
+      getData()
     }
-    const createUser = () => {
-      console.log()
-    }
-
+    // 创建新角色
     const curTitle = ref('新增')
     const dialogFormVisible = ref(false)
     const createForm = ref({
       name: '',
-      region: '',
-      level: '1'
+      code: '',
+      permission: '',
+      level: '',
+      desc: '',
+      createDate: ''
     })
+    // 点击新增角色
     const createClick = () => {
-      curTitle.value = '新增'
-      createForm.value = { name: '', region: '', level: '1' }
       dialogFormVisible.value = true
+      curTitle.value = '新增'
+      createForm.value = { name: '', code: '', permission: '', level: '', desc: '', createDate: '' }
     }
-
-    const editClick = (row: { name: string; region: string; level: string }) => {
+    const editClick = (row: roleRowType) => {
       curTitle.value = '编辑'
       createForm.value = row
       dialogFormVisible.value = true
     }
+    const commitClick = () => {
+      dialogFormVisible.value = false
+      if (curTitle.value === '新增') {
+        console.log('新增处理')
+      } else {
+        console.log('编辑处理')
+      }
+    }
+    const treeData = [
+      {
+        id: 1,
+        label: '主页'
+      },
+      {
+        id: 2,
+        label: '项目总览',
+        children: [
+          {
+            id: 5,
+            label: '项目列表'
+          },
+          {
+            id: 6,
+            label: '新建项目'
+          }
+        ]
+      },
+      {
+        id: 3,
+        label: '附件库'
+      },
+      {
+        id: 3,
+        label: '系统设置',
+        children: [
+          {
+            id: 5,
+            label: '角色管理'
+          },
+          {
+            id: 6,
+            label: '权限管理'
+          }
+        ]
+      },
+      {
+        id: 3,
+        label: '工作台'
+      }
+    ]
     return {
-      formInline, searchData, createUser, roleData, dialogFormVisible, createClick, createForm, editClick, curTitle, treeData
+      loading, roleData, formInline, searchData, dialogFormVisible, createForm, curTitle, createClick, editClick, commitClick, treeData
     }
   }
 })
@@ -167,7 +199,7 @@ export default defineComponent({
 .roleBox{
   display: flex;
   flex-flow: row;
-  height: 400px;
+  max-height: calc(100vh - 140px);
   background-color: #fff;
 }
 .left,.right{

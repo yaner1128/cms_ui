@@ -1,6 +1,6 @@
 <template>
   <div class='projectList'>
-    <el-table :data="tableData" border style="width: 100%">
+    <el-table v-loading="loading" :data="tableData" border style="width: 100%">
       <el-table-column prop="name" label="项目名称" />
       <el-table-column prop="status" label="状态" />
       <el-table-column prop="createDate" label="项目新建日期" />
@@ -9,8 +9,8 @@
       <el-table-column prop="amount" label="收款额" />
       <el-table-column label="操作">
         <template #default="scope">
-          <router-link class="link" :to="detailClick(scope.row)">查看</router-link>
-          <router-link class="link" :to="detailClick(scope.row)">编辑</router-link>
+          <router-link class="link" :to="detailClick(scope.row,'false')">查看</router-link>
+          <router-link class="link" :to="detailClick(scope.row,'true')">编辑</router-link>
         </template>
       </el-table-column>
     </el-table>
@@ -28,13 +28,45 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, onMounted } from 'vue'
+import { defineComponent, onMounted, reactive, ref } from 'vue'
 import * as echarts from 'echarts'
+import { getWorkList } from '@/api/workbench'
+
+interface typeWorkbench {
+  id:string
+  name:string
+  status: string
+  createDate: string
+  product: string
+  desc: string
+  amount: string
+}
 
 export default defineComponent({
   name: 'Workbench',
   components: {},
   setup () {
+    // 查询当前用户下所有项目
+    const loading = ref(false)
+    const tableData: typeWorkbench[] = reactive([])
+    const getData = () => {
+      loading.value = true
+      getWorkList({ id: 'xx' }).then(res => {
+        console.log(res)
+        tableData.splice(0, tableData.length, ...res.data[0].data.data)
+        console.log(tableData)
+        loading.value = false
+      })
+    }
+    getData()
+    /*
+     * 查看详情
+     * row: 当前行数据
+     */
+    function detailClick (row: typeWorkbench, flag: string) {
+      return `/project/details?flag=${flag}&id=${row.id}`
+    }
+
     const optionOne = {
       tooltip: {
         trigger: 'item'
@@ -89,29 +121,6 @@ export default defineComponent({
         }
       ]
     }
-    const tableData = [
-      { id: 1, name: '岳阳市财政数据中心', status: '待付款', createDate: '2022年1月24日', product: '财政数据中心', desc: '第二次付款计划进行中', amount: '10604.1' },
-      { id: 2, name: '临湘市财政数据中心', status: '待付款', createDate: '2022年1月24日', product: '财政数据中心', desc: '第二次付款计划进行中', amount: '20000.00' },
-      { id: 3, name: '郴州市云核算', status: '待付款', createDate: '2022年1月24日', product: '用友云核算', desc: '第一次付款计划进行中', amount: '20030.01' },
-      { id: 4, name: '衡山县财政数据中心', status: '待付款', createDate: '2022年1月24日', product: '财政数据中心', desc: '第三次付款计划进行中', amount: '20063.01' }
-    ]
-
-    /*
-     * 查看详情
-     * row: 当前行数据
-     */
-    interface typeWorkbench {
-      id:string
-      name:string
-      status: string
-      createDate: string
-      product: string
-      desc: string
-      amount: string
-    }
-    function detailClick (row: typeWorkbench) {
-      return '/project/details?id=' + row.id
-    }
     let myChart: any
     let myChart2: any
     const init = () => {
@@ -149,7 +158,7 @@ export default defineComponent({
       }
     })
     return {
-      tableData, detailClick
+      loading, tableData, detailClick
     }
   }
 })

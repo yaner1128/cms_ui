@@ -4,7 +4,8 @@
       <el-aside>
         <el-scrollbar>
           <div class="title">
-            得水-项目管理系统
+            <img src="@/assets/logo.png" alt="">
+            <span>得水-项目管理系统</span>
           </div>
           <el-menu
             background-color="#001529"
@@ -26,7 +27,7 @@
               <template #title>系统设置</template>
               <el-menu-item index="/System/role">角色管理</el-menu-item>
               <el-menu-item index="/System/user">用户管理</el-menu-item>
-              <el-menu-item index="/System/permission">权限管理</el-menu-item>
+              <!-- <el-menu-item index="/System/permission">权限管理</el-menu-item> -->
             </el-sub-menu>
             <el-menu-item index="/Workbench">工作台</el-menu-item>
           </el-menu>
@@ -72,8 +73,7 @@
 <script lang='ts'>
 import router from '@/router'
 // import axios from 'axios'
-import { defineComponent, onMounted } from 'vue'
-import { getDetails } from '@/api/details'
+import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'Layout',
@@ -89,12 +89,6 @@ export default defineComponent({
     }
   },
   setup () {
-    getDetails({}).then(res => {
-      console.log('*********', res)
-    }).catch(rep => {
-      console.log(rep)
-    })
-
     function currentDataName () {
       const curHour = new Date().getHours()
       if (curHour <= 8) {
@@ -187,6 +181,12 @@ a{
     font-weight: 600;
     text-align: center;
     line-height: 40px;
+    display: flex;
+    justify-content: center;
+    img{
+      width: 60px;
+      padding: 5px;
+    }
   }
   .el-menu{
     height: calc(100vh - 40px);

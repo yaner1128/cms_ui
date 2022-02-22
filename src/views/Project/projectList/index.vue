@@ -33,7 +33,7 @@
       </el-form-item>
     </el-form>
     <!-- 表格 -->
-    <el-table :data="tableData" border style="width: 100%">
+    <el-table v-loading="loading" :data="tableData" border style="width: 100%">
       <el-table-column prop="name" label="项目名称" />
       <el-table-column prop="status" label="状态">
         <template #default="scope">
@@ -57,13 +57,37 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, reactive } from 'vue'
+import { defineComponent, reactive, ref } from 'vue'
+import { getProjectList } from '@/api/projectList'
 
+// 筛选条件数据类型
+interface queryType {
+  id: string
+  name: string
+  status: string
+  startDate: string
+  endDate: string
+  product: string
+  owner: string
+}
+// 表格数据类型
+interface rowType{
+  id: string
+  name: string
+  status: string
+  createDate: string
+  product: string
+  owner: string
+  amount: string
+}
+const loading = ref(false)
 export default defineComponent({
   name: 'projectList',
   components: {},
   setup () {
-    const formInline = reactive({
+    // 筛选表单对象
+    const formInline = ref({
+      id: '',
       name: '',
       status: '',
       startDate: '',
@@ -71,31 +95,27 @@ export default defineComponent({
       product: '',
       owner: ''
     })
+    // 定义表格数据
+    const tableData: rowType[] = reactive([])
+    // 日期范围修改方法
     const dateChange = (val: any) => {
-      formInline.startDate = val[0]
-      formInline.endDate = val[1]
+      // formInline.startDate = val[0]
+      // formInline.endDate = val[1]
+    }
+    const getData = async (query: queryType, tableData: rowType[]) => {
+      loading.value = true
+      const params = Object.assign({}, query)
+      await getProjectList(params).then(res => {
+        console.log('**********', res)
+        // tableData = res.data[0].data.data
+        tableData.splice(0, tableData.length, ...res.data[0].data.data)
+        loading.value = false
+      })
     }
     const search = () => {
-      console.log(formInline)
+      getData(formInline.value, tableData)
     }
-
-    // const tableData = ref([])
-    const tableData = [
-      { id: 1, name: '岳阳市财政数据中心', status: '已完成', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '10604.1' },
-      { id: 2, name: '临湘市财政数据中心', status: '待付款', createDate: '2022年1月24日', product: '', owner: '何晋华', amount: '20000.00' },
-      { id: 3, name: '郴州市云核算', status: '待付款', createDate: '2022年1月24日', product: '', owner: '曾武本', amount: '20030.01' },
-      { id: 4, name: '衡山县财政数据中心', status: '已废止', createDate: '2022年1月24日', product: '', owner: '姚竞', amount: '20063.01' }
-    ]
-
-    interface rowType{
-      id: string
-      name: string
-      status: string
-      createDate: string
-      product: string
-      owner: string
-      amount: string
-    }
+    getData(formInline.value, tableData)
     /*
      * 查看详情
      * row: 当前行数据
@@ -105,7 +125,7 @@ export default defineComponent({
     }
 
     return {
-      formInline, tableData, dateChange, search, detailClick
+      formInline, dateChange, loading, tableData, search, detailClick
     }
   }
 })

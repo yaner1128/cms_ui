@@ -2,7 +2,7 @@
 /* eslint-disable handle-callback-err */
 <template>
   <div class='attLibrary'>
-    <el-table :data="tableData" border>
+    <el-table v-loading="loading" :data="tableData" border>
       <el-table-column prop="date" label="上传日期" />
       <el-table-column prop="name" label="名称" />
       <el-table-column prop="product" label="所属项目" />
@@ -11,7 +11,7 @@
       <el-table-column prop="enclosureType" label="附件类型" />
       <el-table-column label="操作">
         <template #default="scope">
-          <a class="link" @click="annexClick(scope.row)">查看</a>
+          <a class="link" :href="scope.row.url" target="blank">查看</a>
           <a class="link" @click="editClick(scope.row)">编辑</a>
         </template>
       </el-table-column>
@@ -65,51 +65,66 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, ref } from 'vue'
+import { defineComponent, reactive, ref } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElUpload } from 'element-plus'
+import { getAttLibrary } from '@/api/attLibrary'
 
-const fileList = ref([])
-const editForm: any = ref({})
-const dialogFormVisible = ref(false)
-const uploadRef = ref<InstanceType<typeof ElUpload>>()
-const submitUpload = () => {
-  uploadRef.value!.submit()
-  dialogFormVisible.value = false
+interface typeRow{
+  id: string
+  date: string
+  name: string
+  product: string
+  fileType: string
+  product2: string
+  enclosureType: string
+  url: string
 }
 export default defineComponent({
   name: 'AttLibaray',
   components: { UploadFilled },
   setup () {
-    const tableData = [
-      { id: 1, date: '2016-05-02', name: 'xx采购合同', product: '衡山', fileType: '采购合同', product2: '会计云核算-衡山县财政局-软件代理销售', enclosureType: 'PDF' },
-      { id: 1, date: '2016-05-03', name: 'xx中标通知书', product: '衡山', fileType: '中标通知书', product2: '会计云核算-衡山县财政局-软件代理销售', enclosureType: '图片' },
-      { id: 1, date: '2016-05-04', name: 'xx销售合同', product: '衡山', fileType: '销售合同', product2: '会计云核算-衡山县财政局-软件代理销售', enclosureType: 'PDF' },
-      { id: 1, date: '2016-05-05', name: 'xx验收清单', product: '衡山', fileType: '验收清单', product2: '会计云核算-衡山县财政局-软件代理销售', enclosureType: 'PDF' }
-    ]
-    interface typeRow{
-      id: string
-      date: string
-      name: string
-      product: string
-      fileType: string
-      product2: string
-      enclosureType: string
+    const loading = ref(false)
+    // 获取表格数据
+    const tableData: typeRow[] = reactive([])
+    const getData = () => {
+      loading.value = true
+      getAttLibrary().then(res => {
+        tableData.splice(0, tableData.length, ...res.data[0].data.data)
+        loading.value = false
+      })
     }
-    /*
-     * 查看详情
-     * row: 当前行数据
-     */
-    const annexClick = (row: typeRow) => {
-      console.log('查看', row)
-    }
+    getData()
+
+    // /*
+    //  * 查看详情
+    //  * row: 当前行数据
+    //  */
+    // const annexClick = (row: typeRow) => {
+    //   console.log('查看', row)
+    //   if (row.enclosureType === 'PDF') {
+    //     console.log('PDF')
+    //     window.open('http://cn.createpdfonline.org/dopdf.php')
+    //   } else if (row.enclosureType === '图片') {
+    //     console.log('图片')
+    //   }
+    // }
     /**
      * 编辑
      **/
+    const fileList = ref([])
+    const editForm: any = ref({})
+    const dialogFormVisible = ref(false)
+    const uploadRef = ref<InstanceType<typeof ElUpload>>()
     const action = process.env.VUE_APP_BASE_API + '/api/personInfo/batchAdd'
+
     const editClick = (row: typeRow) => {
       editForm.value = Object.assign({}, row)
       dialogFormVisible.value = true
+    }
+    const submitUpload = () => {
+      uploadRef.value!.submit()
+      dialogFormVisible.value = false
     }
     const uploadSuccess = (response: { code: number; message: string }, file: any, fileList: any) => {
       if (response.code === 200) {
@@ -125,7 +140,7 @@ export default defineComponent({
     }
 
     return {
-      tableData, annexClick, editClick, dialogFormVisible, editForm, fileList, action, submitUpload, uploadSuccess, uploadError
+      loading, tableData, editClick, dialogFormVisible, editForm, fileList, action, submitUpload, uploadSuccess, uploadError
     }
   }
 })
