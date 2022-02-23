@@ -1,6 +1,6 @@
 <template>
   <div class='projectList'>
-    <el-table v-loading="loading" :data="tableData" border style="width: 100%">
+    <el-table class="tableBox" v-loading="loading" :data="tableData" :max-height="480" border>
       <el-table-column prop="name" label="项目名称" />
       <el-table-column prop="status" label="状态" />
       <el-table-column prop="createDate" label="项目新建日期" />
@@ -14,14 +14,14 @@
         </template>
       </el-table-column>
     </el-table>
-    <div class="pictureBox">
+    <div class="pictureBox" v-loading="loading">
       <div class="left">
-        <div class="title">我的收款情况</div>
-        <div class="barBox" id="barBoxOne"></div>
+        <!-- <div class="title">我的收款情况</div> -->
+        <div class="barBox" id="barBoxOne" ref="barBoxOne"></div>
       </div>
       <div class="right">
-        <div class="title">我的项目情况</div>
-        <div class="barBox" id="barBoxTwo"></div>
+        <!-- <div class="title">我的项目情况</div> -->
+        <div class="barBox" id="barBoxTwo" ref="barBoxTwo"></div>
       </div>
     </div>
   </div>
@@ -30,7 +30,9 @@
 <script lang='ts'>
 import { defineComponent, onMounted, reactive, ref } from 'vue'
 import * as echarts from 'echarts'
-import { getWorkList } from '@/api/workbench'
+import { getWorkList, getPieData } from '@/api/workbench'
+import { AxiosResponse } from 'axios'
+import $store from '@/store'
 
 interface typeWorkbench {
   id:string
@@ -46,15 +48,15 @@ export default defineComponent({
   name: 'Workbench',
   components: {},
   setup () {
+    const user = $store.state.userInfo
     // 查询当前用户下所有项目
     const loading = ref(false)
     const tableData: typeWorkbench[] = reactive([])
     const getData = () => {
       loading.value = true
-      getWorkList({ id: 'xx' }).then(res => {
-        console.log(res)
+      getWorkList({ id: user.id }).then(res => {
+        // console.log(res)
         tableData.splice(0, tableData.length, ...res.data[0].data.data)
-        console.log(tableData)
         loading.value = false
       })
     }
@@ -67,7 +69,14 @@ export default defineComponent({
       return `/project/details?flag=${flag}&id=${row.id}`
     }
 
-    const optionOne = {
+    const barBoxOne = ref<HTMLElement>()
+    const barBoxTwo = ref<HTMLElement>()
+
+    const optionOne = reactive({
+      title: {
+        text: '我的收款情况',
+        left: 'center'
+      },
       tooltip: {
         trigger: 'item'
       },
@@ -77,11 +86,10 @@ export default defineComponent({
       },
       series: [
         {
-          name: 'Access From',
           type: 'pie',
           radius: '50%',
           data: [
-            { value: 700, name: '代收款' },
+            { value: 700, name: '待收款' },
             { value: 1200, name: '已收款' }
           ],
           emphasis: {
@@ -93,8 +101,12 @@ export default defineComponent({
           }
         }
       ]
-    }
-    const optionTwo = {
+    })
+    const optionTwo = reactive({
+      title: {
+        text: '我的项目情况',
+        left: 'center'
+      },
       tooltip: {
         trigger: 'item'
       },
@@ -104,7 +116,6 @@ export default defineComponent({
       },
       series: [
         {
-          name: 'Access From',
           type: 'pie',
           radius: '50%',
           data: [
@@ -120,45 +131,28 @@ export default defineComponent({
           }
         }
       ]
+    })
+    const init = (res: AxiosResponse<any, any>) => {
+      console.log('**res****', res)
+      const myChart = echarts.init(barBoxOne.value)
+      myChart.setOption(optionOne)
+
+      const myChart2 = echarts.init(barBoxTwo.value)
+      myChart2.setOption(optionTwo)
+
+      // 自适应大小
+      window.onresize = function () {
+        myChart2.resize()
+        myChart.resize()
+      }
     }
-    let myChart: any
-    let myChart2: any
-    const init = () => {
-      var chartDom = document.getElementById('barBoxOne')
-      var chartDom2 = document.getElementById('barBoxTwo')
-
-      if (chartDom) {
-        myChart = echarts.init(chartDom)
-        myChart.setOption(optionOne)
-      }
-      if (chartDom2) {
-        myChart2 = echarts.init(chartDom2)
-        myChart2.setOption(optionTwo)
-      }
-    }
-    onMounted(() => {
-      init()
-
-      var chartDom = document.getElementById('barBoxOne')
-      var chartDom2 = document.getElementById('barBoxTwo')
-
-      if (chartDom) {
-        if (myChart != null && myChart !== '' && myChart !== undefined) {
-          myChart.dispose()
-        }
-        myChart = echarts.init(chartDom)
-        myChart.setOption(optionOne)
-      }
-      if (chartDom2) {
-        if (myChart2 != null && myChart2 !== '' && myChart2 !== undefined) {
-          myChart2.dispose()
-        }
-        myChart2 = echarts.init(chartDom2)
-        myChart2.setOption(optionTwo)
-      }
+    onMounted(async () => {
+      await getPieData({}).then(res => {
+        init(res)
+      })
     })
     return {
-      loading, tableData, detailClick
+      loading, tableData, detailClick, barBoxOne, barBoxTwo
     }
   }
 })
@@ -169,9 +163,12 @@ export default defineComponent({
   text-decoration: none;
   margin: 0 3px;
 }
+.tableBox{
+  width: 100%;
+}
 .pictureBox{
   margin-top: 30px;
-  // height: 500px;
+  height: 350px;
   display: flex;
   border-bottom: 1px solid #eee;
   .left{

@@ -5,17 +5,17 @@
         <div class="projectName">得水-项目管理系统</div>
         <div class="title">账号登录</div>
         <el-form ref="refForm" :model="loginForm" :rules="rules" class="demo-form-inline">
-          <el-form-item prop="name">
-            <el-input v-model="loginForm.name" placeholder="请输入账号"></el-input>
+          <el-form-item prop="username">
+            <el-input v-model="loginForm.username" auto-complete="off" placeholder="请输入账号"></el-input>
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="loginForm.password" type="password" placeholder="请输入密码"></el-input>
+            <el-input v-model="loginForm.password" autocomplete="off" type="password" placeholder="请输入密码"></el-input>
           </el-form-item>
           <el-form-item>
-            <el-checkbox v-model="loginForm.isRem">记住密码</el-checkbox>
+            <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" @click="login">立即登录</el-button>
+            <el-button :loading="loading" type="primary" @click="login">立即登录</el-button>
           </el-form-item>
         </el-form>
       </div>
@@ -25,37 +25,61 @@
 
 <script lang='ts'>
 import router from '@/router'
+import Cookies from 'js-cookie'
+import $store from '@/store'
 import { defineComponent, reactive, ref } from 'vue'
+
+const rules = reactive({
+  username: [
+    { required: true, message: '请输入账号', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' }
+  ]
+})
 
 export default defineComponent({
   name: 'Login',
   components: {},
   setup () {
-    const loginForm = reactive({
-      name: '',
+    const loading = ref(false)
+    const loginForm = ref({
+      username: '',
       password: '',
-      isRem: false
+      rememberMe: false
     })
-    const rules = reactive({
-      name: [
-        { required: true, message: '请输入账号', trigger: 'blur' }
-      ],
-      password: [
-        { required: true, message: '请输入密码', trigger: 'blur' }
-      ]
-    })
+
+    const getCookie = () => {
+      const username = Cookies.get('username')
+      const password = Cookies.get('password')
+      const rememberMe = Cookies.get('rememberMe')
+
+      loginForm.value = {
+        username: username === undefined ? loginForm.value.username : username,
+        password: password === undefined ? loginForm.value.password : password,
+        rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
+      }
+    }
+    getCookie()
+    // 表单校验
     const refForm = ref()
     const login = () => {
       refForm.value.validate((valid:boolean) => {
         if (valid) {
+          loading.value = true
           // 校验成功
-          router.push('/home')
+          $store.dispatch('Login', loginForm.value).then(() => {
+            loading.value = false
+            router.push({ path: '/home', replace: true })
+          }).catch((rep) => {
+            console.log('error', rep)
+          })
         }
       })
     }
 
     return {
-      loginForm, rules, login, refForm
+      loading, loginForm, rules, refForm, login
     }
   }
 })

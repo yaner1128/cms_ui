@@ -7,3 +7,4 @@ declare module '*.vue' {
 }
 declare module 'mockjs';
 declare module 'echarts';
+declare module 'js-cookie';

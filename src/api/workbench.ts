@@ -7,10 +7,10 @@ export function getWorkList (data: any) {
   })
 }
 
-// export function getAllRoleList (params: any) {
-//   return request({
-//     url: 'api/allRoleList',
-//     method: 'post',
-//     data: params
-//   })
-// }
+export function getPieData (params: any) {
+  return request({
+    url: 'api/workList',
+    method: 'post',
+    data: params
+  })
+}

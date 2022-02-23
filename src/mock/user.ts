@@ -1,16 +1,3 @@
-const demo1 = [{
-  status: 200,
-  message: 'success',
-  data: {
-    total: 100,
-    'rows|10': [{
-      id: '@guid',
-      name: '@cname',
-      'age|20-30': 23,
-      'job|1': ['前端工程师', '后端工程师', 'UI工程师', '需求工程师']
-    }]
-  }
-}]
 const projectList = [{
   status: 200,
   message: 'success',
@@ -202,6 +189,19 @@ const workList = [{
     }]
   }
 }]
+const login = [{
+  status: 200,
+  message: 'success',
+  data: {
+    user: {
+      userInfo: {
+        id: '1001001',
+        username: 'admin'
+      }
+    },
+    token: 'asdfghjkl'
+  }
+}]
 export default {
   'post|api/projectList': projectList,
   'post|api/detail': detail,
@@ -213,5 +213,6 @@ export default {
   'post|api/userList': userList,
   'post|api/roleList': roleList,
   'post|api/allRoleList': allRoleList,
-  'post|api/workList': workList
+  'post|api/workList': workList,
+  'post|api/login': login
 }

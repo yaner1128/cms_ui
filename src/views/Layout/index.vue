@@ -15,7 +15,8 @@
             :unique-opened="true"
             router
           >
-            <el-menu-item index="/home">主页</el-menu-item>
+            <!-- <el-menu-item index="/home">主页</el-menu-item> -->
+            <el-menu-item index="/home">工作台</el-menu-item>
             <el-sub-menu index="/project">
               <template #title>项目总览</template>
               <el-menu-item index="/project/projectList">项目列表</el-menu-item>
@@ -29,7 +30,7 @@
               <el-menu-item index="/System/user">用户管理</el-menu-item>
               <!-- <el-menu-item index="/System/permission">权限管理</el-menu-item> -->
             </el-sub-menu>
-            <el-menu-item index="/Workbench">工作台</el-menu-item>
+            <!-- <el-menu-item index="/Workbench">工作台</el-menu-item> -->
           </el-menu>
         </el-scrollbar>
       </el-aside>
@@ -42,7 +43,7 @@
               <el-breadcrumb-item v-for="(item,index) in breadcrumbList" :key="index" :to="{path: item.path}">{{ item.name }}</el-breadcrumb-item>
               <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->
             </el-breadcrumb>
-            <div class="userName">{{ userName }} {{ currentDataName() }}好!</div>
+            <div class="userName">{{ userInfo.username }} {{ currentDataName() }}好!</div>
             <el-dropdown>
               <div class="ava">
                 <img src="../../assets/person.png" alt="">
@@ -50,7 +51,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item>
-                    <router-link to="/login" replace>退出登录</router-link>
+                    <span @click="layoutClick" replace>退出登录</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
@@ -72,8 +73,11 @@
 
 <script lang='ts'>
 import router from '@/router'
-// import axios from 'axios'
-import { defineComponent } from 'vue'
+import $store from '@/store'
+import { defineComponent, ref } from 'vue'
+import { getUserInfo } from '@/utils/token'
+import Cookies from 'js-cookie'
+import { ElMessage } from 'element-plus'
 
 export default defineComponent({
   name: 'Layout',
@@ -89,6 +93,10 @@ export default defineComponent({
     }
   },
   setup () {
+    const userInfo = ref({
+      id: '',
+      username: ''
+    })
     function currentDataName () {
       const curHour = new Date().getHours()
       if (curHour <= 8) {
@@ -101,14 +109,25 @@ export default defineComponent({
         return '晚上'
       }
     }
-    const userName = 'admin'
+    const layoutClick = () => {
+      $store.dispatch('LogOut').then(() => {
+        router.push({ path: '/', replace: true })
+      })
+    }
+    if (!Cookies.get('userInfo')) {
+      router.push({ path: '/login', replace: true })
+      ElMessage.error('登录过期, 请重新登录!')
+    } else {
+      $store.commit('SET_USER', JSON.parse(getUserInfo()))
+      userInfo.value = JSON.parse(getUserInfo())
+    }
     // function selectMenu (index: string, indexPath: any) {
     //   console.log(index, indexPath)
     //   console.log('currentRoute', router.currentRoute.value.matched)
     // }
 
     return {
-      currentDataName, userName
+      userInfo, currentDataName, layoutClick
     }
   }
 })

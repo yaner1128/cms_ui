@@ -1,5 +1,7 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import Layout from '@/views/Layout/index.vue'
+import Cookies from 'js-cookie'
+import { ElMessage } from 'element-plus'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -18,8 +20,9 @@ const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: '/home',
-        name: '主页',
-        component: () => import('@/views/Home.vue')
+        name: '工作台',
+        // component: () => import('@/views/Home.vue')
+        component: () => import('@/views/Workbench/index.vue')
       }
     ]
   },
@@ -78,25 +81,31 @@ const routes: Array<RouteRecordRaw> = [
         component: () => import('@/views/System/Role/index.vue')
       }
     ]
-  },
-  // 工作台
-  {
-    path: '/Workbench',
-    redirect: '/Workbench',
-    component: Layout,
-    children: [
-      {
-        path: '/Workbench',
-        name: '工作台',
-        component: () => import('@/views/Workbench/index.vue')
-      }
-    ]
   }
+  // 工作台
+  // {
+  //   path: '/Workbench',
+  //   redirect: '/Workbench',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: '/Workbench',
+  //       name: '工作台',
+  //       component: () => import('@/views/Workbench/index.vue')
+  //     }
+  //   ]
+  // }
 ]
 
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+router.beforeEach((to, from, next) => {
+  if (to.name !== 'login' && !Cookies.get('userInfo')) {
+    next({ name: 'login' })
+    ElMessage.error('登录过期, 请重新登录!')
+  } else next()
 })
 
 export default router

@@ -153,6 +153,7 @@ export default defineComponent({
       userForm.value = { code: '', name: '', sex: 0, depart: '', date: '', status: '' }
     }
     const handleAddUser = () => {
+      userDialog.value = false
       console.log(userForm.value)
       if (createdUserTitle.value === '新增') {
         console.log('新增提交')
