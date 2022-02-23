@@ -3,17 +3,18 @@
     <!-- 查询 -->
     <el-form :inline="true" :model="formInline" class="demo-form-inline">
       <el-form-item>
-        <el-input v-model="formInline.name" placeholder="请输入项目名称"></el-input>
+        <el-input v-model="formInline.name" clearable placeholder="请输入项目名称"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-select v-model="formInline.status" placeholder="请选择状态">
+        <el-select v-model="formInline.status" clearable placeholder="请选择状态">
           <el-option label="已完成" value="已完成"></el-option>
           <el-option label="待付款" value="待付款"></el-option>
           <el-option label="已废止" value="已废止"></el-option>
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-date-picker  v-model="formInline.startDate"
+        <el-date-picker
+        v-model="value1"
           type="daterange"
           range-separator="-"
           @change="dateChange"
@@ -22,10 +23,10 @@
         </el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-input v-model="formInline.product" placeholder="请输入产品名称"></el-input>
+        <el-input v-model="formInline.product" clearable placeholder="请输入产品名称"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-input v-model="formInline.owner" placeholder="请输入责任人"></el-input>
+        <el-input v-model="formInline.owner" clearable placeholder="请输入责任人"></el-input>
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="search">搜索</el-button>
@@ -59,6 +60,7 @@
 <script lang='ts'>
 import { defineComponent, reactive, ref } from 'vue'
 import { getProjectList } from '@/api/projectList'
+import { format } from '@/utils/dateFormat'
 
 // 筛选条件数据类型
 interface queryType {
@@ -85,6 +87,7 @@ export default defineComponent({
   name: 'projectList',
   components: {},
   setup () {
+    const value1 = ref('')
     // 筛选表单对象
     const formInline = ref({
       id: '',
@@ -99,20 +102,21 @@ export default defineComponent({
     const tableData: rowType[] = reactive([])
     // 日期范围修改方法
     const dateChange = (val: any) => {
-      // formInline.startDate = val[0]
-      // formInline.endDate = val[1]
+      console.log('******', val)
+      formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
+      formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
     }
     const getData = async (query: queryType, tableData: rowType[]) => {
       loading.value = true
       const params = Object.assign({}, query)
       await getProjectList(params).then(res => {
-        console.log('**********', res)
         // tableData = res.data[0].data.data
         tableData.splice(0, tableData.length, ...res.data[0].data.data)
         loading.value = false
       })
     }
     const search = () => {
+      console.log(formInline.value)
       getData(formInline.value, tableData)
     }
     getData(formInline.value, tableData)
@@ -125,7 +129,7 @@ export default defineComponent({
     }
 
     return {
-      formInline, dateChange, loading, tableData, search, detailClick
+      formInline, dateChange, loading, tableData, search, detailClick, value1
     }
   }
 })
