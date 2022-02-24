@@ -18,12 +18,12 @@ const detail = [{
   status: 200,
   message: 'success',
   data: {
-    'active|1': [1, 2, 3, 4],
+    'active|1': [1, 2, 3],
     setupList: [
-      { title: '立项', description: '中标日期: 2022年1月24日\n合同日期: 2022年1月24日', desc1: '中标日期: 2022年1月24日', desc2: '合同日期: 2022年1月24日' },
-      { title: '实施中', description: '第一阶段付款: 2022年1月24日' },
-      { title: '项目验收', description: '进行中' },
-      { title: '项目完成', description: '合同终止日期: 2025年1月24日' }
+      { title: '立项', description: '中标日期: 2022年1月24日\n合同日期: 2022年1月24日', desc1: '中标日期: 2022年1月24日', desc2: '合同日期: 2022年1月24日', id: 'lx' },
+      { title: '实施中', description: '第一阶段付款: 2022年1月24日', id: 'ssz' },
+      { title: '项目验收', description: '进行中', id: 'xmys' },
+      { title: '项目完成', description: '合同终止日期: 2025年1月24日', id: 'xmwc' }
     ],
     detailList: [
       { name: '项目名称', prop: '衡山县财政数据中心' },
@@ -168,7 +168,7 @@ const allRoleList = [{
       code: '@guid',
       'name|1': ['超级管理员', '管理员', '普通用户', '系统管理员'],
       'permission|1': ['范围1', '范围2', '范围3'],
-      'level|1': [1, 2, 3, 4],
+      level: /([1-4]){1}/,
       'desc|1': ['描述一', '描述二', '描述三'],
       'createDate|1': ['2022-02-22']
     }]
@@ -203,6 +203,16 @@ const login = [{
     token: 'asdfghjkl'
   }
 }]
+const menuList = [{
+  status: 200,
+  message: 'success',
+  data: [
+    {
+      id: 1,
+      label: '工作台'
+    }
+  ]
+}]
 export default {
   'post|api/projectList': projectList,
   'post|api/detail': detail,
@@ -215,5 +225,6 @@ export default {
   'post|api/roleList': roleList,
   'post|api/allRoleList': allRoleList,
   'post|api/workList': workList,
-  'post|api/login': login
+  'post|api/login': login,
+  'post|api/menuList': menuList
 }

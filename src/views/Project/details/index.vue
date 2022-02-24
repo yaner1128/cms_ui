@@ -3,9 +3,9 @@
     <div class="generalization" v-loading="loading">
       <span class="title">{{ projectName }}项目情况概览</span>
       <div class="processBox">
-        <el-steps :active="1" align-center>
-          <el-step v-for="(step,index) in stepList"
-            :key="index"
+        <el-steps :active="active" align-center>
+          <el-step v-for="step in stepList"
+            :key="step.id"
             :title="step.title"
             :description="step.description">
             <template #description>
@@ -65,7 +65,7 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, onMounted, reactive, ref } from 'vue'
+import { defineComponent, onMounted, ref, nextTick } from 'vue'
 import { getDetails, getContractDetails } from '@/api/details'
 import router from '@/router'
 
@@ -74,6 +74,7 @@ interface stepListType {
   description: string
   desc1?: string
   desc2?: string
+  id: string
 }
 interface detailListType {
   name: string
@@ -95,41 +96,42 @@ export default defineComponent({
   name: 'Details',
   components: {},
   setup () {
+    // 加载标识
     const loading = ref(false)
     const loading2 = ref(false)
-    const active = ref(0)
-    const projectName = ref('')
-    // 地铁图数据
-    const stepList: stepListType[] = reactive([])
     // 当前项目详细数据
-    const detailList: detailListType[] = reactive([])
-    const getData = async (query: any) => {
+    const detailList = ref<detailListType[]>([])
+    // 当前项目名称
+    const projectName = ref('')
+    // 步骤条进度
+    const active = ref(0)
+    // 步骤条数据
+    const stepList = ref<stepListType[]>([])
+    // 调用接口获取数据
+    const getData = (query: any) => {
       loading.value = true
       loading2.value = true
       const params = Object.assign({}, query)
-      await getDetails(params).then(res => {
+      getDetails(params).then(res => {
         loading.value = false
-        active.value = res.data[0].data.active
-        console.log('***curActive***', active.value)
-
         projectName.value = res.data[0].data.detailList[0].prop
-        stepList.splice(0, stepList.length, ...res.data[0].data.setupList)
-        detailList.splice(0, detailList.length, ...res.data[0].data.detailList)
-
-        console.log('****stepList****', stepList)
+        stepList.value = res.data[0].data.setupList
+        detailList.value = res.data[0].data.detailList
+        nextTick(() => {
+          active.value = res.data[0].data.active
+        })
       })
       // 获取合同数据
       getContractDetails(params).then(res => {
         loading2.value = false
-        purchaseData.splice(0, purchaseData.length, ...res.data[0].data.purchaseData)
-        paymentPlan.splice(0, paymentPlan.length, ...res.data[0].data.paymentPlan)
+        purchaseData.value = res.data[0].data.purchaseData
+        paymentPlan.value = res.data[0].data.paymentPlan
       })
     }
     // 采购合同数据
-    const purchaseData: purchaseDataType[] = reactive([])
+    const purchaseData = ref<purchaseDataType[]>([])
     // 付款计划
-    const paymentPlan: paymentPlanType[] = reactive([])
-
+    const paymentPlan = ref<paymentPlanType[]>([])
     // 判断是否带参数
     const query = router.currentRoute.value.query
     const isEdit = ref(false)
@@ -151,7 +153,7 @@ export default defineComponent({
     */
     const DateList: unknown[] = []
     const temp: unknown[] = []
-    purchaseData.forEach((item: any) => {
+    purchaseData.value.forEach((item: any) => {
       if (!temp.includes(item.date)) {
         temp.push(item.date)
         DateList.push({ text: item.date, value: item.date })

@@ -90,7 +90,7 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, ref, reactive } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { getUserList, getRoleList, getAllRoleList } from '@/api/userList'
 
 interface userDataType {
@@ -118,11 +118,11 @@ export default defineComponent({
     const formInline = ref({ name: '' })
     // 查询用户数据
     const loading = ref(false)
-    const tableData: userDataType[] = reactive([])
+    const tableData = ref<userDataType[]>([])
     const getData = () => {
       loading.value = true
       getUserList(formInline.value).then(res => {
-        tableData.splice(0, tableData.length, ...res.data[0].data.data)
+        tableData.value = res.data[0].data.data
         loading.value = false
       })
     }
@@ -170,22 +170,21 @@ export default defineComponent({
     // 新增角色
     const outerVisible = ref(false)
     const innerVisible = ref(false)
-    const curRoleData: any = reactive([])
+    const curRoleData = ref<any[]>([])
     const handleAddRole = (row: any) => {
       outerVisible.value = true
-      console.log(row)
       // 获取当前用户角色列表
       getRoleList({ id: row.id }).then(res => {
-        curRoleData.splice(0, curRoleData.length, ...res.data[0].data.data)
+        curRoleData.value = res.data[0].data.data
       })
     }
-    const roleList: roleListType[] = reactive([])
     const selectRole = () => {
       innerVisible.value = true
     }
+    const roleList = ref<roleListType[]>([])
     // 获取所有角色
     getAllRoleList({}).then(res => {
-      roleList.splice(0, roleList.length, ...res.data[0].data.data)
+      roleList.value = res.data[0].data.data
     })
     const createdRole = ref('')
     // 点击提交新增角色

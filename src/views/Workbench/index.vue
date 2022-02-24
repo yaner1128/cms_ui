@@ -10,7 +10,7 @@
       <el-table-column label="操作">
         <template #default="scope">
           <router-link class="link" :to="detailClick(scope.row,'false')">查看</router-link>
-          <router-link class="link" :to="detailClick(scope.row,'true')">编辑</router-link>
+          <router-link v-if="checkPermission(['ADMIN'])"  class="link" :to="detailClick(scope.row,'true')">编辑</router-link>
         </template>
       </el-table-column>
     </el-table>
@@ -33,6 +33,7 @@ import * as echarts from 'echarts'
 import { getWorkList, getPieData } from '@/api/workbench'
 import { AxiosResponse } from 'axios'
 import $store from '@/store'
+import checkPermission from '@/utils/permission'
 
 interface typeWorkbench {
   id:string
@@ -51,12 +52,12 @@ export default defineComponent({
     const user = $store.state.userInfo
     // 查询当前用户下所有项目
     const loading = ref(false)
-    const tableData: typeWorkbench[] = reactive([])
+    const tableData = ref<typeWorkbench[]>([])
     const getData = () => {
       loading.value = true
       getWorkList({ id: user.id }).then(res => {
         // console.log(res)
-        tableData.splice(0, tableData.length, ...res.data[0].data.data)
+        tableData.value = res.data[0].data.data
         loading.value = false
       })
     }
@@ -71,7 +72,7 @@ export default defineComponent({
 
     const barBoxOne = ref<HTMLElement>()
     const barBoxTwo = ref<HTMLElement>()
-
+    // echarts图表配置
     const optionOne = reactive({
       title: {
         text: '我的收款情况',
@@ -152,7 +153,7 @@ export default defineComponent({
       })
     })
     return {
-      loading, tableData, detailClick, barBoxOne, barBoxTwo
+      loading, tableData, detailClick, barBoxOne, barBoxTwo, checkPermission
     }
   }
 })

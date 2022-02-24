@@ -80,7 +80,6 @@ interface ownerListType {
 export default defineComponent({
   name: 'created',
   setup () {
-    // 定义表单
     const form = ref({
       name: '',
       type: '',
@@ -94,18 +93,20 @@ export default defineComponent({
       region: ''
     })
     // 责任人、产品、地区 列表数据
-    const ownerList: ownerListType[] = reactive([])
-    const productList: ownerListType[] = reactive([])
-    const regionList: any[] = reactive([])
+    const ownerList = ref<ownerListType[]>([])
+    const productList = ref<ownerListType[]>([])
+    const regionList = ref<[]>([])
+
+    // 获取选择框下拉数据
     const getData = () => {
       getOwnerList().then(res => {
-        ownerList.splice(0, ownerList.length, ...res.data[0].data.data)
+        ownerList.value = res.data[0].data.data
       })
       getRegionList().then(res => {
-        regionList.splice(0, regionList.length, ...res.data[0].data.data)
+        regionList.value = res.data[0].data.data
       })
       getProductList().then(res => {
-        productList.splice(0, productList.length, ...res.data[0].data.data)
+        productList.value = res.data[0].data.data
       })
     }
     getData()
@@ -121,25 +122,15 @@ export default defineComponent({
       refForm.value.validate((valid:boolean) => {
         if (valid) {
           // 校验成功 创建
-          console.log(form.value)
+          console.log(form)
         }
       })
     }
     // 重置
     const reset = () => {
-      form.value = reactive({
-        name: '',
-        type: '',
-        owner: '',
-        isBidding: true,
-        product: '',
-        salesNum: 0,
-        amountNum: 0,
-        sales: 0,
-        amount: 0,
-        region: ''
-      })
+      form.value = { name: '', type: '', owner: '', isBidding: true, product: '', salesNum: 0, amountNum: 0, sales: 0, amount: 0, region: '' }
     }
+
     return {
       form, rules, ownerList, productList, regionList, changeType, refForm, onSubmit, reset
     }

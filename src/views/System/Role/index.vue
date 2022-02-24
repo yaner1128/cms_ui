@@ -12,24 +12,24 @@
       </el-form>
     </div>
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="500px">
-      <el-form :model="createForm">
-        <el-form-item label="角色名称">
-          <el-input v-model="createForm.name" autocomplete="off"></el-input>
+      <el-form :model="createForm" :rules="rules" label-width="80px">
+        <el-form-item label="角色名称" prop="name">
+          <el-input v-model="createForm.name" autocomplete="off" :disabled="curTitle==='编辑'" placeholder="请输入角色名称"></el-input>
         </el-form-item>
-        <el-form-item label="角色代码">
-          <el-input v-model="createForm.code" autocomplete="off"></el-input>
+        <el-form-item label="角色代码" prop="code" v-if="curTitle==='编辑'">
+          <el-input v-model="createForm.code" autocomplete="off" :disabled="curTitle==='编辑'"></el-input>
         </el-form-item>
-        <el-form-item label="角色级别">
+        <el-form-item label="角色级别" prop="level">
           <el-input-number v-model="createForm.level" :min="1" controls-position="right" />
         </el-form-item>
-        <el-form-item label="数据范围">
-          <el-select v-model="createForm.permission" placeholder="Please select a zone">
+        <el-form-item label="数据范围" prop="permission">
+          <el-select v-model="createForm.permission" placeholder="请选择数据范围">
             <el-option label="范围1" value="范围1"></el-option>
             <el-option label="范围2" value="范围2"></el-option>
             <el-option label="范围3" value="范围3"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="描述信息">
+        <el-form-item label="描述信息" prop="desc">
           <el-input v-model="createForm.desc" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
@@ -44,7 +44,7 @@
       <div class="left">
         <div class="title">角色列表</div>
         <div class="box">
-          <el-table v-loading="loading" :data="roleData">
+          <el-table v-loading="loading" :data="roleData" @row-click="rowClick">
             <el-table-column prop="name" label="名称"  />
             <el-table-column prop="code" label="角色代码"  />
             <el-table-column prop="permission" label="数据权限" />
@@ -61,18 +61,22 @@
         </div>
       </div>
       <div class="right">
-        <div class="title">菜单分配</div>
-        <div class="box">
+        <div class="title">
+          <span>菜单权限</span>
+          <el-button type="primary" @click="saveClick">保存</el-button>
+        </div>
+        <div class="box" v-loading="loading2" v-show="isShow">
           <el-tree
+            ref="menu"
             :data="treeData"
-            show-checkbox
-            node-key="id"
-            :default-checked-keys="[5]"
+            :default-checked-keys="defaultKey"
             :props="{
               children: 'children',
               label: 'label',
             }"
-          />
+            accordion
+            show-checkbox
+            node-key="id"/>
         </div>
       </div>
     </div>
@@ -80,14 +84,29 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, reactive, ref } from 'vue'
+import { defineComponent, nextTick, reactive, ref } from 'vue'
 import { getAllRoleList } from '@/api/userList'
+import { getMenuList } from '@/api/menuList'
 
+const rules = reactive({
+  name: [
+    { required: true, message: '请输入角色名称', trigger: 'blur' }
+  ],
+  code: [
+    { required: true, message: '请输入角色代码', trigger: 'blur' }
+  ],
+  level: [
+    { required: true, message: '请输入角色级别', trigger: 'blur' }
+  ],
+  permission: [
+    { required: true, message: '请选择数据范围', trigger: 'change' }
+  ]
+})
 interface roleRowType {
   name: string
   code: string
   permission: string
-  level: string
+  level: number
   desc:string
   createDate:string
 }
@@ -95,19 +114,20 @@ export default defineComponent({
   name: 'System',
   components: {},
   setup () {
+    const loading2 = ref(false)
+    const isShow = ref(false)
     // 表单
     const formInline = ref({
       name: ''
     })
     // 查询表格数据
     const loading = ref(false)
-    const roleData: any = reactive([])
+    const roleData = ref<any[]>([])
     const getData = () => {
       loading.value = true
       const params = Object.assign({}, formInline.value)
       getAllRoleList(params).then(res => {
-        roleData.splice(0, roleData.length, ...res.data[0].data.data)
-        console.log(roleData)
+        roleData.value = res.data[0].data.data
         loading.value = false
       })
     }
@@ -124,15 +144,72 @@ export default defineComponent({
       name: '',
       code: '',
       permission: '',
-      level: '',
+      level: 0,
       desc: '',
       createDate: ''
     })
+    const treeData = ref<any[]>([])
+    const data = [
+      {
+        id: 1,
+        label: '工作台'
+      },
+      {
+        id: 2,
+        label: '项目总览',
+        children: [
+          {
+            id: 2.1,
+            label: '项目列表'
+          },
+          {
+            id: 2.2,
+            label: '新建项目'
+          }
+        ]
+      },
+      {
+        id: 3,
+        label: '附件库'
+      },
+      {
+        id: 4,
+        label: '系统设置',
+        children: [
+          {
+            id: 4.1,
+            label: '角色管理'
+          },
+          {
+            id: 4.2,
+            label: '用户管理'
+          }
+        ]
+      }
+    ]
     // 点击新增角色
     const createClick = () => {
       dialogFormVisible.value = true
       curTitle.value = '新增'
-      createForm.value = { name: '', code: '', permission: '', level: '', desc: '', createDate: '' }
+      createForm.value = { name: '', code: '', permission: '', level: 0, desc: '', createDate: '' }
+    }
+    // 菜单默认选择的项
+    const defaultKey = ref([1])
+    // 菜单权限保存
+    const saveClick = () => {
+      console.log(defaultKey.value)
+      console.log('保存菜单权限')
+    }
+    // 行点击事件
+    const rowClick = (row: roleRowType) => {
+      loading2.value = true
+      isShow.value = true
+      getMenuList(row).then(res => {
+        treeData.value = [...data]
+        loading2.value = false
+        defaultKey.value = [1, 2]
+        console.log('***defaultKey.value***', defaultKey.value)
+      })
     }
     const editClick = (row: roleRowType) => {
       curTitle.value = '编辑'
@@ -147,50 +224,8 @@ export default defineComponent({
         console.log('编辑处理')
       }
     }
-    const treeData = [
-      {
-        id: 1,
-        label: '主页'
-      },
-      {
-        id: 2,
-        label: '项目总览',
-        children: [
-          {
-            id: 5,
-            label: '项目列表'
-          },
-          {
-            id: 6,
-            label: '新建项目'
-          }
-        ]
-      },
-      {
-        id: 3,
-        label: '附件库'
-      },
-      {
-        id: 3,
-        label: '系统设置',
-        children: [
-          {
-            id: 5,
-            label: '角色管理'
-          },
-          {
-            id: 6,
-            label: '权限管理'
-          }
-        ]
-      },
-      {
-        id: 3,
-        label: '工作台'
-      }
-    ]
     return {
-      loading, roleData, formInline, searchData, dialogFormVisible, createForm, curTitle, createClick, editClick, commitClick, treeData
+      rules, loading, loading2, isShow, roleData, formInline, searchData, dialogFormVisible, createForm, curTitle, createClick, rowClick, defaultKey, editClick, commitClick, treeData, saveClick
     }
   }
 })
@@ -211,6 +246,9 @@ export default defineComponent({
     padding: 0 10px;
     font-size: 16px;
     font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 .box{

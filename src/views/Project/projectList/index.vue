@@ -50,7 +50,7 @@
       <el-table-column label="操作">
         <template #default="scope">
           <router-link class="link" :to="detailClick(scope.row,'false')">查看</router-link>
-          <router-link class="link" :to="detailClick(scope.row,'true')">编辑</router-link>
+          <router-link class="link" v-if="checkPermission(['ADMIN'])" :to="detailClick(scope.row,'true')">编辑</router-link>
         </template>
       </el-table-column>
     </el-table>
@@ -61,6 +61,7 @@
 import { defineComponent, reactive, ref } from 'vue'
 import { getProjectList } from '@/api/projectList'
 import { format } from '@/utils/dateFormat'
+import checkPermission from '@/utils/permission'
 
 // 筛选条件数据类型
 interface queryType {
@@ -87,7 +88,7 @@ export default defineComponent({
   components: {},
   setup () {
     const value1 = ref('')
-    // 筛选表单对象
+    // 定义查询表单
     const formInline = ref({
       name: '',
       status: '',
@@ -97,10 +98,9 @@ export default defineComponent({
       owner: ''
     })
     // 定义表格数据
-    const tableData: rowType[] = reactive([])
+    const tableData = ref<rowType[]>([])
     // 日期范围修改方法
-    const dateChange = (val: any) => {
-      console.log('******', val)
+    const dateChange = (val: string) => {
       formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
       formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
     }
@@ -108,31 +108,33 @@ export default defineComponent({
       loading.value = true
       const params = Object.assign({}, query)
       await getProjectList(params).then(res => {
-        // tableData = res.data[0].data.data
-        tableData.splice(0, tableData.length, ...res.data[0].data.data)
+        tableData.value = res.data[0].data.data
         loading.value = false
       })
     }
+    getData(formInline.value)
+    // 搜索查询
     const search = () => {
-      console.log(formInline.value)
       getData(formInline.value)
     }
+    // 重置
     const reset = () => {
       formInline.value = { name: '', status: '', startDate: '', endDate: '', product: '', owner: '' }
       value1.value = ''
       getData(formInline.value)
     }
-    getData(formInline.value)
+
     /*
      * 查看详情
      * row: 当前行数据
+     * flag: 是否可编辑标识
      */
     function detailClick (row: rowType, flag: string) {
       return `/project/details?flag=${flag}&id=${row.id}`
     }
 
     return {
-      formInline, dateChange, loading, tableData, search, reset, detailClick, value1
+      formInline, dateChange, loading, tableData, search, reset, detailClick, value1, checkPermission
     }
   }
 })

@@ -8,14 +8,18 @@ export default createStore({
     userInfo: {
       id: '',
       username: ''
-    }
+    },
+    active: 0
   },
   mutations: {
     SET_TOKEN: (state, token) => {
       state.token = token
     },
-    SET_USER: (state, token) => {
-      state.token = token
+    SET_USER: (state, userInfo) => {
+      state.token = userInfo
+    },
+    SET_SETUP: (state, active) => {
+      state.active = active
     }
   },
   actions: {
@@ -26,6 +30,7 @@ export default createStore({
       return new Promise<void>((resolve, reject) => {
         login({ username, password, rememberMe }).then((res) => {
           setUserInfo(JSON.stringify(userInfo))
+          localStorage.setItem('permission', JSON.stringify([username]))
           commit('SET_TOKEN', res.data[0].data.token)
           resolve()
         }).catch((error: string) => {
@@ -35,6 +40,7 @@ export default createStore({
     },
     // 登出
     LogOut ({ commit }) {
+      localStorage.setItem('permission', '')
       commit('SET_TOKEN', '')
       removeUserInfo()
       removeToken()

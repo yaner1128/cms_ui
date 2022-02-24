@@ -45,11 +45,10 @@
       <el-table-column prop="fileType" label="文件类型" />
       <el-table-column prop="product2" label="所属项目" width="300px" />
       <el-table-column prop="enclosureType" label="附件类型" />
-      <el-table-column prop="url" label="附件地址" />
       <el-table-column label="操作">
         <template #default="scope">
           <a class="link" :href="scope.row.url" target="_blank">查看</a>
-          <a class="link" @click="editClick(scope.row)">编辑</a>
+          <a class="link" v-if="checkPermission(['ADMIN'])" @click="editClick(scope.row)">编辑</a>
         </template>
       </el-table-column>
     </el-table>
@@ -113,6 +112,7 @@ import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElUpload } from 'element-plus'
 import { getAttLibrary } from '@/api/attLibrary'
 import { format } from '@/utils/dateFormat'
+import checkPermission from '@/utils/permission'
 
 interface queryType {
   startDate: string
@@ -152,10 +152,12 @@ export default defineComponent({
       formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
       formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
     }
+    // 搜索
     const search = () => {
       console.log(formInline.value)
       getData(formInline.value)
     }
+    // 重置
     const reset = () => {
       formInline.value = { startDate: '', endDate: '', name: '', product: '', fileType: '', type: '' }
       value1.value = ''
@@ -193,13 +195,14 @@ export default defineComponent({
       console.log(file)
     }
     const uploadRef = ref<InstanceType<typeof ElUpload>>()
+    // 附件提交
     const submitUpload = () => {
+      console.log('12333')
       uploadRef.value!.submit()
       dialogFormVisible.value = false
     }
-    const uploadSuccess = (response: any, file: any, fileList: any) => {
-      console.log(response, file)
-      console.log('****fileList*******', fileList)
+    const uploadSuccess = (response: any, fileList: any) => {
+      console.log(response)
       if (response[0].status === 200) {
         ElMessage.success('上传成功')
         dialogFormVisible.value = false
@@ -208,14 +211,13 @@ export default defineComponent({
         ElMessage.warning(response.message + '!')
       }
     }
-    const uploadError = (error: any, file: any, fileList: any) => {
-      console.log(error, file)
-      console.log('****fileList*******', fileList)
+    const uploadError = (error: any) => {
+      console.log(error)
       ElMessage.warning('导入失败!')
     }
 
     return {
-      loading, formInline, value1, dateChange, search, reset, tableData, editClick, dialogFormVisible, editForm, fileList, action, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError
+      loading, formInline, value1, dateChange, search, reset, tableData, editClick, dialogFormVisible, editForm, fileList, action, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError, checkPermission
     }
   }
 })
