@@ -30,7 +30,7 @@
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="search">搜索</el-button>
-        <el-button type="success">重置</el-button>
+        <el-button type="success" @click="reset">重置</el-button>
       </el-form-item>
     </el-form>
     <!-- 表格 -->
@@ -64,7 +64,6 @@ import { format } from '@/utils/dateFormat'
 
 // 筛选条件数据类型
 interface queryType {
-  id: string
   name: string
   status: string
   startDate: string
@@ -90,7 +89,6 @@ export default defineComponent({
     const value1 = ref('')
     // 筛选表单对象
     const formInline = ref({
-      id: '',
       name: '',
       status: '',
       startDate: '',
@@ -106,7 +104,7 @@ export default defineComponent({
       formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
       formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
     }
-    const getData = async (query: queryType, tableData: rowType[]) => {
+    const getData = async (query: queryType) => {
       loading.value = true
       const params = Object.assign({}, query)
       await getProjectList(params).then(res => {
@@ -117,9 +115,14 @@ export default defineComponent({
     }
     const search = () => {
       console.log(formInline.value)
-      getData(formInline.value, tableData)
+      getData(formInline.value)
     }
-    getData(formInline.value, tableData)
+    const reset = () => {
+      formInline.value = { name: '', status: '', startDate: '', endDate: '', product: '', owner: '' }
+      value1.value = ''
+      getData(formInline.value)
+    }
+    getData(formInline.value)
     /*
      * 查看详情
      * row: 当前行数据
@@ -129,7 +132,7 @@ export default defineComponent({
     }
 
     return {
-      formInline, dateChange, loading, tableData, search, detailClick, value1
+      formInline, dateChange, loading, tableData, search, reset, detailClick, value1
     }
   }
 })

@@ -1,8 +1,9 @@
 import request from '@/utils/request'
 
-export function getAttLibrary () {
+export function getAttLibrary (data: any) {
   return request({
     url: 'api/attLibrary',
-    method: 'post'
+    method: 'post',
+    data: data
   })
 }

@@ -18,6 +18,7 @@ const detail = [{
   status: 200,
   message: 'success',
   data: {
+    'active|1': [1, 2, 3, 4],
     setupList: [
       { title: '立项', description: '中标日期: 2022年1月24日\n合同日期: 2022年1月24日', desc1: '中标日期: 2022年1月24日', desc2: '合同日期: 2022年1月24日' },
       { title: '实施中', description: '第一阶段付款: 2022年1月24日' },
