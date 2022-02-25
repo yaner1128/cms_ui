@@ -15,22 +15,25 @@
             :unique-opened="true"
             router
           >
-            <!-- <el-menu-item index="/home">主页</el-menu-item> -->
-            <el-menu-item index="/home">工作台</el-menu-item>
+            <template v-for="(route) in routerList" :key="route.path">
+              <el-sub-menu v-if="route.name" :index="route.path">
+                <template #title>{{ route.name }}</template>
+                <el-menu-item v-for="(item) in route.children" :key="item.path" :index="route.path+'/'+item.path">{{ item.name }}</el-menu-item>
+              </el-sub-menu>
+              <el-menu-item v-else v-for="item in route.children" :key="item.path" :index="item.path">{{ item.name }}</el-menu-item>
+            </template>
+            <!-- <el-menu-item index="/home">工作台</el-menu-item>
             <el-sub-menu index="/project">
               <template #title>项目总览</template>
               <el-menu-item index="/project/projectList">项目列表</el-menu-item>
               <el-menu-item index="/project/created">新建项目</el-menu-item>
             </el-sub-menu>
             <el-menu-item index="/AttLibrary">附件库</el-menu-item>
-            <!-- <el-menu-item index="/System/setting">系统设置</el-menu-item> -->
             <el-sub-menu index="/System">
               <template #title>系统设置</template>
               <el-menu-item index="/System/role">角色管理</el-menu-item>
               <el-menu-item index="/System/user">用户管理</el-menu-item>
-              <!-- <el-menu-item index="/System/permission">权限管理</el-menu-item> -->
-            </el-sub-menu>
-            <!-- <el-menu-item index="/Workbench">工作台</el-menu-item> -->
+            </el-sub-menu> -->
           </el-menu>
         </el-scrollbar>
       </el-aside>
@@ -93,6 +96,13 @@ export default defineComponent({
     }
   },
   setup () {
+    const routerList = router.options.routes.filter(item => {
+      item.children = item.children?.filter(child => {
+        return child.name
+      })
+      return item.meta?.isShow
+    })
+    console.log(routerList)
     const userInfo = ref({
       id: '',
       username: ''
@@ -121,13 +131,9 @@ export default defineComponent({
       $store.commit('SET_USER', JSON.parse(getUserInfo()))
       userInfo.value = JSON.parse(getUserInfo())
     }
-    // function selectMenu (index: string, indexPath: any) {
-    //   console.log(index, indexPath)
-    //   console.log('currentRoute', router.currentRoute.value.matched)
-    // }
 
     return {
-      userInfo, currentDataName, layoutClick
+      userInfo, currentDataName, layoutClick, routerList
     }
   }
 })

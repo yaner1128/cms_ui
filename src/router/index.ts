@@ -6,23 +6,35 @@ import { ElMessage } from 'element-plus'
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
-    redirect: '/login'
+    redirect: '/login',
+    meta: {
+      isShow: false
+    }
   },
   {
     path: '/login',
     name: 'login',
-    component: () => import('@/views/Login/index.vue')
+    component: () => import('@/views/Login/index.vue'),
+    meta: {
+      isShow: false
+    }
   },
   {
     path: '/home',
     redirect: '/home',
     component: Layout,
+    meta: {
+      isShow: true
+    },
     children: [
       {
         path: '/home',
         name: '工作台',
         // component: () => import('@/views/Home.vue')
-        component: () => import('@/views/Workbench/index.vue')
+        component: () => import('@/views/Workbench/index.vue'),
+        meta: {
+          isShow: true
+        }
       }
     ]
   },
@@ -32,21 +44,32 @@ const routes: Array<RouteRecordRaw> = [
     name: '项目总览',
     redirect: '/project/projectList',
     component: Layout,
+    meta: {
+      isShow: true
+    },
     children: [
       {
         path: 'projectList',
         name: '项目列表',
-        component: () => import('@/views/Project/projectList/index.vue')
+        component: () => import('@/views/Project/projectList/index.vue'),
+        meta: {
+          isShow: true
+        }
       },
       {
         path: 'created',
         name: '新建项目',
-        component: () => import('@/views/Project/created/index.vue')
+        component: () => import('@/views/Project/created/index.vue'),
+        meta: {
+          isShow: true
+        }
       },
       {
         path: 'details',
-        name: '项目详情',
-        component: () => import('@/views/Project/details/index.vue')
+        component: () => import('@/views/Project/details/index.vue'),
+        meta: {
+          isShow: false
+        }
       }
     ]
   },
@@ -55,11 +78,17 @@ const routes: Array<RouteRecordRaw> = [
     path: '/AttLibrary',
     redirect: '/AttLibrary',
     component: Layout,
+    meta: {
+      isShow: true
+    },
     children: [
       {
         path: '/AttLibrary',
         name: '附件库',
-        component: () => import('@/views/AttLibrary/index.vue')
+        component: () => import('@/views/AttLibrary/index.vue'),
+        meta: {
+          isShow: true
+        }
       }
     ]
   },
@@ -69,16 +98,25 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/System/role',
     name: '系统设置',
     component: Layout,
+    meta: {
+      isShow: true
+    },
     children: [
       {
         path: 'user',
         name: '用户管理',
-        component: () => import('@/views/System/User/index.vue')
+        component: () => import('@/views/System/User/index.vue'),
+        meta: {
+          isShow: true
+        }
       },
       {
         path: 'role',
         name: '角色管理',
-        component: () => import('@/views/System/Role/index.vue')
+        component: () => import('@/views/System/Role/index.vue'),
+        meta: {
+          isShow: true
+        }
       }
     ]
   }

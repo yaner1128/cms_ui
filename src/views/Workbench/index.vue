@@ -1,6 +1,6 @@
 <template>
   <div class='projectList'>
-    <el-table class="tableBox" v-loading="loading" :data="tableData" :max-height="480" border>
+    <el-table class="tableBox" v-loading="loading" :data="tableData" :height="480" border>
       <el-table-column prop="name" label="项目名称" />
       <el-table-column prop="status" label="状态" />
       <el-table-column prop="createDate" label="项目新建日期" />
@@ -133,7 +133,7 @@ export default defineComponent({
         }
       ]
     })
-    const init = (res: AxiosResponse<any, any>) => {
+    const init = (res: AxiosResponse<unknown, unknown>) => {
       console.log('**res****', res)
       const myChart = echarts.init(barBoxOne.value)
       myChart.setOption(optionOne)

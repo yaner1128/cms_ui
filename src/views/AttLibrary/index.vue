@@ -148,7 +148,7 @@ export default defineComponent({
       type: ''
     })
     // 日期范围修改方法
-    const dateChange = (val: any) => {
+    const dateChange = (val: string) => {
       formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
       formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
     }
@@ -176,12 +176,13 @@ export default defineComponent({
     /**
      * 编辑
      **/
-    const fileList = ref([])
+    const fileList = ref<unknown[]>([])
     const editForm: any = ref({})
     const dialogFormVisible = ref(false)
     const action = 'api/attLibrary'
 
     const editClick = (row: typeRow) => {
+      console.log('****编辑****')
       editForm.value = Object.assign({}, row)
       if (localStorage.getItem('file') && localStorage.getItem('file') !== null) {
         fileList.value = JSON.parse(localStorage.getItem('file') || '')
@@ -191,18 +192,17 @@ export default defineComponent({
     const fileExceed = () => {
       ElMessage.warning('文件超出限制')
     }
-    const filePreview = (file: any) => {
+    const filePreview = (file: unknown) => {
       console.log(file)
     }
     const uploadRef = ref<InstanceType<typeof ElUpload>>()
     // 附件提交
     const submitUpload = () => {
-      console.log('12333')
       uploadRef.value!.submit()
       dialogFormVisible.value = false
     }
-    const uploadSuccess = (response: any, fileList: any) => {
-      console.log(response)
+    const uploadSuccess = (response: any, file:unknown, fileList: unknown) => {
+      console.log(response, file)
       if (response[0].status === 200) {
         ElMessage.success('上传成功')
         dialogFormVisible.value = false
@@ -211,7 +211,7 @@ export default defineComponent({
         ElMessage.warning(response.message + '!')
       }
     }
-    const uploadError = (error: any) => {
+    const uploadError = (error: unknown) => {
       console.log(error)
       ElMessage.warning('导入失败!')
     }

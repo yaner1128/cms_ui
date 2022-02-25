@@ -54,7 +54,12 @@
             <el-table-column label="操作">
               <template #default="scope">
                 <el-button type="primary" @click="editClick(scope.row)">编辑</el-button>
-                <el-button type="danger">删除</el-button>
+                <el-popconfirm title="确认删除本条数据吗？">
+                  <template #reference>
+                    <el-button type="danger">删除</el-button>
+                  </template>
+                </el-popconfirm>
+                <!-- <el-button type="danger">删除</el-button> -->
               </template>
             </el-table-column>
           </el-table>
@@ -63,20 +68,21 @@
       <div class="right">
         <div class="title">
           <span>菜单权限</span>
-          <el-button type="primary" @click="saveClick">保存</el-button>
+          <el-button type="primary" v-show="isSave" @click="saveClick">保存</el-button>
         </div>
         <div class="box" v-loading="loading2" v-show="isShow">
           <el-tree
-            ref="menu"
+            ref="menuRef"
+            @check="isSave=true"
+            :default-expand-all="true"
             :data="treeData"
             :default-checked-keys="defaultKey"
             :props="{
               children: 'children',
-              label: 'label',
+              label: 'name',
             }"
-            accordion
             show-checkbox
-            node-key="id"/>
+            node-key="name"/>
         </div>
       </div>
     </div>
@@ -84,9 +90,10 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, nextTick, reactive, ref } from 'vue'
+import { defineComponent, reactive, ref } from 'vue'
 import { getAllRoleList } from '@/api/userList'
 import { getMenuList } from '@/api/menuList'
+import router from '@/router'
 
 const rules = reactive({
   name: [
@@ -122,7 +129,7 @@ export default defineComponent({
     })
     // 查询表格数据
     const loading = ref(false)
-    const roleData = ref<any[]>([])
+    const roleData = ref<roleRowType[]>([])
     const getData = () => {
       loading.value = true
       const params = Object.assign({}, formInline.value)
@@ -148,45 +155,24 @@ export default defineComponent({
       desc: '',
       createDate: ''
     })
-    const treeData = ref<any[]>([])
-    const data = [
-      {
-        id: 1,
-        label: '工作台'
-      },
-      {
-        id: 2,
-        label: '项目总览',
-        children: [
-          {
-            id: 2.1,
-            label: '项目列表'
-          },
-          {
-            id: 2.2,
-            label: '新建项目'
-          }
-        ]
-      },
-      {
-        id: 3,
-        label: '附件库'
-      },
-      {
-        id: 4,
-        label: '系统设置',
-        children: [
-          {
-            id: 4.1,
-            label: '角色管理'
-          },
-          {
-            id: 4.2,
-            label: '用户管理'
-          }
-        ]
-      }
-    ]
+    // 获取菜单列表
+    const list = ref<unknown[]>([])
+    const routerList = () => {
+      const temp = router.options.routes.filter(item => {
+        item.children = item.children?.filter(child => {
+          return child.name
+        })
+        return item.meta?.isShow
+      })
+      temp.forEach(item => {
+        if (!item.name && item.children) {
+          item = item.children[0]
+        }
+        list.value.push(item)
+      })
+    }
+    routerList()
+    const treeData = ref<unknown[]>([])
     // 点击新增角色
     const createClick = () => {
       dialogFormVisible.value = true
@@ -194,20 +180,28 @@ export default defineComponent({
       createForm.value = { name: '', code: '', permission: '', level: 0, desc: '', createDate: '' }
     }
     // 菜单默认选择的项
-    const defaultKey = ref([1])
+    const defaultKey = ref(['工作台'])
+    // 是否显示保存按钮
+    const isSave = ref(false)
     // 菜单权限保存
+    const menuRef = ref()
     const saveClick = () => {
-      console.log(defaultKey.value)
-      console.log('保存菜单权限')
+      isSave.value = false
+      // 当前选中的所有菜单名称
+      // const query = menuRef.value.getCheckedKeys(true)
+      console.log('保存菜单权限', menuRef.value.getCheckedKeys(true))
     }
     // 行点击事件
     const rowClick = (row: roleRowType) => {
+      isSave.value = false
       loading2.value = true
       isShow.value = true
       getMenuList(row).then(res => {
-        treeData.value = [...data]
+        console.log(res)
+        treeData.value = [...list.value]
+        console.log('treeData', treeData.value)
         loading2.value = false
-        defaultKey.value = [1, 2]
+        defaultKey.value = ['工作台', '项目列表']
         console.log('***defaultKey.value***', defaultKey.value)
       })
     }
@@ -224,8 +218,9 @@ export default defineComponent({
         console.log('编辑处理')
       }
     }
+
     return {
-      rules, loading, loading2, isShow, roleData, formInline, searchData, dialogFormVisible, createForm, curTitle, createClick, rowClick, defaultKey, editClick, commitClick, treeData, saveClick
+      rules, loading, loading2, isShow, roleData, formInline, searchData, dialogFormVisible, createForm, curTitle, createClick, rowClick, defaultKey, editClick, commitClick, treeData, saveClick, menuRef, isSave
     }
   }
 })

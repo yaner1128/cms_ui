@@ -127,7 +127,7 @@ const attLibraryList = [{
         'fileType|1': ['采购合同', '中标通知书', '销售合同', '验收清单'],
         product2: '会计云核算-衡山县财政局-软件代理销售',
         'enclosureType|1': ['PDF', '图片'],
-        'url|1': ['https://t7.baidu.com/it/u=4036010509,3445021118&fm=193&f=GIF']
+        'url|1': ['https://img0.baidu.com/it/u=1721391133,702358773&fm=253&fmt=auto&app=120&f=JPEG?w=500&h=625']
       }
     ]
   }
@@ -178,8 +178,8 @@ const workList = [{
   status: 200,
   message: 'success',
   data: {
-    total: 6,
-    'data|6': [{
+    total: 100,
+    'data|15': [{
       id: '@guid',
       'name|1': ['岳阳市财政数据中心', '临湘市财政数据中心', '郴州市云核算', '衡山县财政数据中心'],
       'status|1': ['已完成', '待付款', '已废止'],
@@ -206,12 +206,15 @@ const login = [{
 const menuList = [{
   status: 200,
   message: 'success',
-  data: [
-    {
-      id: 1,
-      label: '工作台'
-    }
-  ]
+  data: {
+    deafult: [1, 2.1],
+    data: [
+      {
+        id: 1,
+        label: '工作台'
+      }
+    ]
+  }
 }]
 export default {
   'post|api/projectList': projectList,

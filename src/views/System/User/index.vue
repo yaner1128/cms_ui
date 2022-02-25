@@ -55,7 +55,12 @@
         <template #default="scope">
           <el-button type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
           <el-button type="text" size="small" @click="handleAddRole(scope.row)">添加角色</el-button>
-          <el-button type="text" size="small">删除</el-button>
+          <el-popconfirm title="确认删除本条数据吗？">
+            <template #reference>
+              <el-button type="text" size="small">删除</el-button>
+            </template>
+          </el-popconfirm>
+          <!-- <el-button type="text" size="small">删除</el-button> -->
         </template>
       </el-table-column>
     </el-table>
@@ -66,7 +71,12 @@
           <el-table-column property="name" label="角色"></el-table-column>
           <el-table-column fixed="right" label="操作">
             <template #default="scope">
-              <el-button type="text" size="small" @click="deleteClick(scope.row)">删除</el-button>
+              <el-popconfirm title="确认删除本条数据吗？">
+                <template #reference>
+                  <el-button type="danger" @click="deleteClick(scope.row)">删除</el-button>
+                </template>
+              </el-popconfirm>
+              <!-- <el-button type="text" size="small" @click="deleteClick(scope.row)">删除</el-button> -->
             </template>
           </el-table-column>
         </el-table>
