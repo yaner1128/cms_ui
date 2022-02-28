@@ -117,6 +117,22 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           isShow: true
         }
+      },
+      {
+        path: 'depart',
+        name: '部门管理',
+        component: () => import('@/views/System/Depart/index.vue'),
+        meta: {
+          isShow: true
+        }
+      },
+      {
+        path: 'position',
+        name: '职位管理',
+        component: () => import('@/views/System/Position/index.vue'),
+        meta: {
+          isShow: true
+        }
       }
     ]
   }
