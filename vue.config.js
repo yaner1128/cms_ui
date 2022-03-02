@@ -10,12 +10,12 @@ module.exports = {
     port: 8090,
     open: true,
     proxy: {
-      '/api': {
-        target: 'http://192.168.1.7:1036', // 我的服务器地址
+      '/': {
+        target: 'http://192.168.1.166:8201', // 我的服务器地址
         changeOrigin: true, // 接口跨域配置
         // pathRewrite方法重写url
         pathRewrite: {
-          '^/api': ''
+          '^/ctms-auth': ''
         }
       }
     }

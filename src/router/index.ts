@@ -13,7 +13,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     path: '/login',
-    name: 'login',
+    name: '登录',
     component: () => import('@/views/Login/index.vue'),
     meta: {
       isShow: false
@@ -133,6 +133,14 @@ const routes: Array<RouteRecordRaw> = [
         meta: {
           isShow: true
         }
+      },
+      {
+        path: 'menu',
+        name: '菜单管理',
+        component: () => import('@/views/System/Menu/index.vue'),
+        meta: {
+          isShow: true
+        }
       }
     ]
   }
@@ -156,8 +164,9 @@ const router = createRouter({
   routes
 })
 router.beforeEach((to, from, next) => {
-  if (to.name !== 'login' && !Cookies.get('userInfo')) {
-    next({ name: 'login' })
+  console.log('*****to*****', to)
+  if (to.path !== '/login' && !Cookies.get('userInfo')) {
+    next({ path: '/login' })
     ElMessage.error('登录过期, 请重新登录!')
   } else next()
 })

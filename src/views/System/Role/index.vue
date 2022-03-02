@@ -11,6 +11,30 @@
         </el-form-item>
       </el-form>
     </div>
+    <div class="roleBox">
+      <div class="title">角色列表</div>
+      <div class="box">
+        <el-table v-loading="loading" :data="roleData">
+          <el-table-column prop="name" label="名称"  />
+          <el-table-column prop="code" label="角色代码"  />
+          <el-table-column prop="permission" label="数据权限" />
+          <el-table-column prop="level" label="角色级别"  />
+          <el-table-column prop="desc" label="描述" />
+          <el-table-column prop="createDate" label="创建日期" />
+          <el-table-column label="操作">
+            <template #default="scope">
+              <el-button type="primary" size="small" @click="editClick(scope.row)">编辑</el-button>
+              <el-button type="warning" size="small" @click="permissionClick(scope.row)">权限控制</el-button>
+              <el-popconfirm title="确认删除本条数据吗？">
+                <template #reference>
+                  <el-button type="danger" size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </div>
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="500px">
       <el-form :model="createForm" :rules="rules" label-width="80px">
         <el-form-item label="角色名称" prop="name">
@@ -40,57 +64,42 @@
         </span>
       </template>
     </el-dialog>
-    <div class="roleBox">
-      <div class="left">
-        <div class="title">角色列表</div>
-        <div class="box">
-          <el-table v-loading="loading" :data="roleData" @row-click="rowClick">
-            <el-table-column prop="name" label="名称"  />
-            <el-table-column prop="code" label="角色代码"  />
-            <el-table-column prop="permission" label="数据权限" />
-            <el-table-column prop="level" label="角色级别"  />
-            <el-table-column prop="desc" label="描述" />
-            <el-table-column prop="createDate" label="创建日期" />
-            <el-table-column label="操作">
-              <template #default="scope">
-                <el-button type="primary" @click="editClick(scope.row)">编辑</el-button>
-                <el-popconfirm title="确认删除本条数据吗？">
-                  <template #reference>
-                    <el-button type="danger">删除</el-button>
-                  </template>
-                </el-popconfirm>
-                <!-- <el-button type="danger">删除</el-button> -->
-              </template>
-            </el-table-column>
-          </el-table>
+    <!-- 权限控制 -->
+    <el-dialog v-model="permissionBox" title="权限设置" width="60%">
+      <div class="permissionBox">
+        <div class="left">
+          <div class="title">
+            <span>菜单权限</span>
+            <el-button type="primary" v-show="isMeueSave" @click="saveClick">保存</el-button>
+          </div>
+          <div class="box" v-loading="loading2">
+            <el-tree
+              ref="menuRef"
+              @check="isMeueSave=true"
+              :default-expand-all="true"
+              :data="treeData"
+              :default-checked-keys="defaultKey"
+              :props="{
+                children: 'children',
+                label: 'name',
+              }"
+              show-checkbox
+              node-key="name"/>
+          </div>
+        </div>
+        <div class="right">
+          <div class="title">
+            <span>接口权限</span>
+            <el-button type="primary" v-show="isSave" @click="saveClick">保存</el-button>
+          </div>
         </div>
       </div>
-      <div class="right">
-        <div class="title">
-          <span>菜单权限</span>
-          <el-button type="primary" v-show="isSave" @click="saveClick">保存</el-button>
-        </div>
-        <div class="box" v-loading="loading2" v-show="isShow">
-          <el-tree
-            ref="menuRef"
-            @check="isSave=true"
-            :default-expand-all="true"
-            :data="treeData"
-            :default-checked-keys="defaultKey"
-            :props="{
-              children: 'children',
-              label: 'name',
-            }"
-            show-checkbox
-            node-key="name"/>
-        </div>
-      </div>
-    </div>
+    </el-dialog>
   </div>
 </template>
 
 <script lang='ts'>
-import { defineComponent, reactive, ref } from 'vue'
+import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { getAllRoleList } from '@/api/userList'
 import { getMenuList } from '@/api/menuList'
 import router from '@/router'
@@ -121,21 +130,29 @@ export default defineComponent({
   name: 'System',
   components: {},
   setup () {
-    const loading2 = ref(false)
-    const isShow = ref(false)
+    const data = reactive({
+      loading: false, // 表格加载
+      loading2: false, // 菜单加载
+      isSave: false, // 是否显示保存按钮
+      isMeueSave: false,
+      curTitle: '新增',
+      dialogFormVisible: false,
+      permissionBox: false
+    })
+    const resData = toRefs(data)
+
     // 表单
     const formInline = ref({
       name: ''
     })
     // 查询表格数据
-    const loading = ref(false)
     const roleData = ref<roleRowType[]>([])
     const getData = () => {
-      loading.value = true
+      data.loading = true
       const params = Object.assign({}, formInline.value)
       getAllRoleList(params).then(res => {
         roleData.value = res.data[0].data.data
-        loading.value = false
+        data.loading = false
       })
     }
     getData()
@@ -144,17 +161,8 @@ export default defineComponent({
       console.log(formInline.value)
       getData()
     }
-    // 创建新角色
-    const curTitle = ref('新增')
-    const dialogFormVisible = ref(false)
-    const createForm = ref({
-      name: '',
-      code: '',
-      permission: '',
-      level: 0,
-      desc: '',
-      createDate: ''
-    })
+
+    const createForm = ref({ name: '', code: '', permission: '', level: 0, desc: '', createDate: '' })
     // 获取菜单列表
     const list = ref<unknown[]>([])
     const routerList = () => {
@@ -172,55 +180,56 @@ export default defineComponent({
       })
     }
     routerList()
+    // 菜单数据
     const treeData = ref<unknown[]>([])
     // 点击新增角色
     const createClick = () => {
-      dialogFormVisible.value = true
-      curTitle.value = '新增'
+      data.dialogFormVisible = true
+      data.curTitle = '新增'
       createForm.value = { name: '', code: '', permission: '', level: 0, desc: '', createDate: '' }
     }
-    // 菜单默认选择的项
-    const defaultKey = ref(['工作台'])
-    // 是否显示保存按钮
-    const isSave = ref(false)
-    // 菜单权限保存
-    const menuRef = ref()
-    const saveClick = () => {
-      isSave.value = false
-      // 当前选中的所有菜单名称
-      // const query = menuRef.value.getCheckedKeys(true)
-      console.log('保存菜单权限', menuRef.value.getCheckedKeys(true))
-    }
-    // 行点击事件
-    const rowClick = (row: roleRowType) => {
-      isSave.value = false
-      loading2.value = true
-      isShow.value = true
-      getMenuList(row).then(res => {
-        console.log(res)
-        treeData.value = [...list.value]
-        console.log('treeData', treeData.value)
-        loading2.value = false
-        defaultKey.value = ['工作台', '项目列表']
-        console.log('***defaultKey.value***', defaultKey.value)
-      })
-    }
+    // 编辑
     const editClick = (row: roleRowType) => {
-      curTitle.value = '编辑'
+      data.dialogFormVisible = true
+      data.curTitle = '编辑'
       createForm.value = row
-      dialogFormVisible.value = true
     }
+    // 提交
     const commitClick = () => {
-      dialogFormVisible.value = false
-      if (curTitle.value === '新增') {
+      data.dialogFormVisible = false
+      if (data.curTitle === '新增') {
         console.log('新增处理')
       } else {
         console.log('编辑处理')
       }
     }
-
+    // 权限设置
+    const permissionClick = async (row: roleRowType) => {
+      data.permissionBox = true
+      data.loading2 = true
+      await getMenuList(row).then(res => {
+        console.log(res)
+        data.loading2 = false
+        treeData.value = [...list.value]
+        defaultKey.value = ['工作台', '项目列表']
+        console.log('***defaultKey.value***', defaultKey.value)
+      })
+    }
+    // 菜单默认选择的项
+    const defaultKey = ref(['工作台'])
+    // 菜单权限保存
+    const menuRef = ref()
+    const saveClick = () => {
+      data.loading2 = true
+      setTimeout(() => {
+        data.loading2 = false
+        data.isMeueSave = false
+      }, 1000)
+      console.log('保存菜单权限', menuRef.value.getCheckedKeys(true))
+    }
+    // 接口权限
     return {
-      rules, loading, loading2, isShow, roleData, formInline, searchData, dialogFormVisible, createForm, curTitle, createClick, rowClick, defaultKey, editClick, commitClick, treeData, saveClick, menuRef, isSave
+      rules, ...resData, roleData, formInline, searchData, createForm, createClick, defaultKey, editClick, commitClick, treeData, saveClick, menuRef, permissionClick
     }
   }
 })
@@ -228,12 +237,11 @@ export default defineComponent({
 <style lang="scss" scoped>
 .roleBox{
   display: flex;
-  flex-flow: row;
+  flex-direction: column;
   max-height: calc(100vh - 140px);
   background-color: #fff;
-}
-.left,.right{
   border: 1px solid #eee;
+  width: 100%;
   .title{
     height: 50px;
     border-bottom: 1px solid #eee;
@@ -249,11 +257,30 @@ export default defineComponent({
 .box{
   padding: 0 10px;
 }
-.left{
-  width: 68%;
-  margin-right: 30px;
-}
-.right{
-  flex: 0 1 30%;
+.permissionBox{
+  width: 100%;
+  min-height: 500px;
+  display: flex;
+  flex-direction: row;
+  box-sizing: border-box;
+  .left{
+    margin-right: 30px;
+    box-sizing: border-box;
+  }
+  .left,.right{
+    flex: 0 1 50%;
+    border: 1px solid #e0e0e0;
+    .title{
+      height: 50px;
+      border-bottom: 1px solid #eee;
+      line-height: 50px;
+      padding: 0 10px;
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
 }
 </style>

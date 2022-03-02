@@ -139,11 +139,11 @@ const userList = [{
     total: 100,
     'data|10': [{
       code: '@guid',
-      name: '@cname',
-      'sex|1': [0, 1],
+      employeeName: '@cname',
+      'gender|1': [0, 1],
       'depart|1': ['总经办', '行政部', '业务部', '研发部'],
-      'date|1': [],
-      'status|1': ['在职', '离职']
+      'age|1': ['22', '23', '24'],
+      'employeeDate|1': ['2020-01-01', '2020-01-02']
     }]
   }
 }]

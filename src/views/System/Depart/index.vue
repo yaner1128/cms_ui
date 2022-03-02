@@ -16,21 +16,38 @@
     >
       <el-table-column type="selection" />
       <el-table-column fixed prop="name" label="名称" />
-      <el-table-column prop="parentId" label="父节点" />
+      <el-table-column prop="parentId" label="上级部门" />
       <el-table-column prop="sort" label="排序" />
       <el-table-column prop="createDate" label="创建时间" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
-          <el-button type="text" size="small" @click="handleClick(scope.row)">编辑</el-button>
-          <el-button type="text" size="small" @click="deleteClick(scope.row)">删除</el-button>
+          <el-button type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
+          <el-popconfirm title="确认删除本条数据吗?">
+            <template #reference>
+              <el-button type="text" size="small" @click="deleteClick(scope.row)">删除</el-button>
+            </template>
+          </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      v-model:currentPage="currentPage"
+      v-model:page-size="pageSize"
+      :page-sizes="[10, 20, 50, 100]"
+      :small="small"
+      :disabled="disabled"
+      :background="background"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    >
+    </el-pagination>
 
-    <el-dialog v-model="dialogFormVisible" title="Shipping address">
-      <el-form :model="form">
-        <el-form-item label="父节点">
-          <el-select v-model="form.region" placeholder="请选择父节点">
+    <el-dialog v-model="dialogFormVisible" :title="curTitle" width="600px">
+      <el-form :model="form" label-width="80px">
+        <el-form-item label="上级部门">
+          <el-select v-model="form.region" placeholder="请选择上级部门">
             <el-option label="Zone No.1" value="shanghai"></el-option>
             <el-option label="Zone No.2" value="beijing"></el-option>
           </el-select>
@@ -44,8 +61,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogFormVisible = false">Cancel</el-button>
-          <el-button type="primary" @click="dialogFormVisible = false">Confirm</el-button>
+          <el-button @click="cancelClick">取消</el-button>
+          <el-button type="primary" @click="commitClick">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -53,40 +70,63 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, ref, reactive } from 'vue'
-import { toRefs } from 'vue-demi'
+import { defineComponent, ref, reactive, toRefs } from 'vue'
+import { page } from '@/utils/page'
 
 export default defineComponent({
   name: 'depart',
   components: {},
   setup () {
+    const { pageData, handleSizeChange, handleCurrentChange } = page()
     const data = reactive({
       selectName: '',
       dialogFormVisible: false,
-      form: {
-        name: '',
-        region: ''
-      }
+      curTitle: '新增'
+    })
+    const form = ref({
+      name: '',
+      region: ''
     })
     const resData = toRefs(data)
+    // 新增
     const add = (row: any) => {
-      console.log(row)
-    }
-    const deleteClick = (row: any) => {
+      data.dialogFormVisible = true
+      data.curTitle = '新增'
       console.log(row)
     }
     // 表格数据
     const tableData = ref<any[]>([
       { name: 111 }
     ])
-    const handleClick = (row: any) => {
-      console.log(row)
-    }
+    // 查询
     const onSubmit = () => {
       console.log('查询', data.selectName)
     }
+    // 编辑
+    const editClick = (row: any) => {
+      data.dialogFormVisible = true
+      data.curTitle = '编辑'
+      console.log(row)
+    }
+    // 删除
+    const deleteClick = (row: any) => {
+      console.log(row)
+    }
+    // 取消
+    const cancelClick = () => {
+      data.dialogFormVisible = false
+      form.value = { name: '', region: '' }
+    }
+    // 提交
+    const commitClick = () => {
+      data.dialogFormVisible = false
+      // 提交
+
+      form.value = { name: '', region: '' }
+    }
+
     return {
-      ...resData, add, tableData, handleClick, deleteClick, onSubmit
+      ...resData, form, add, tableData, onSubmit, editClick, deleteClick, cancelClick, commitClick, ...pageData, handleSizeChange, handleCurrentChange
     }
   }
 })
@@ -104,5 +144,10 @@ export default defineComponent({
   .el-input{
     margin-right: 20px;
   }
+}
+.el-pagination{
+  text-align: center;
+  padding-top: 30px;
+  margin: 0 auto;
 }
 </style>

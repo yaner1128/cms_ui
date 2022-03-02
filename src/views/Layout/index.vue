@@ -54,6 +54,7 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item>
+                    <i class="iconfont icon-gongzuoguanli-huiyiguanli"></i>
                     <span @click="layoutClick" replace>退出登录</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>
