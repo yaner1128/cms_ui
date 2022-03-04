@@ -1,5 +1,3 @@
-/* eslint-disable handle-callback-err */
-/* eslint-disable handle-callback-err */
 <template>
   <div class='attLibrary'>
     <el-form :inline="true" :model="formInline" class="demo-form-inline">
@@ -52,6 +50,18 @@
         </template>
       </el-table-column>
     </el-table>
+    <el-pagination
+      v-model:currentPage="currentPage"
+      v-model:page-size="pageSize"
+      :page-sizes="[10, 20, 50, 100]"
+      :small="small"
+      :disabled="disabled"
+      :background="background"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
     <el-dialog v-model="dialogFormVisible" :title="editForm.name">
       <el-form class="dialogForm" :model="editForm" label-width="80px">
         <el-form-item label="名称" prop="name">
@@ -107,12 +117,14 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, reactive, ref } from 'vue'
+import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElUpload } from 'element-plus'
 import { getAttLibrary } from '@/api/attLibrary'
 import { format } from '@/utils/dateFormat'
 import checkPermission from '@/utils/permission'
+import { page } from '@/utils/page'
+import { number } from 'node_modules/_echarts@5.3.0@echarts'
 
 interface queryType {
   startDate: string
@@ -136,22 +148,20 @@ export default defineComponent({
   name: 'AttLibaray',
   components: { UploadFilled },
   setup () {
-    const loading = ref(false)
-    // 查询表单数据
-    const value1 = ref('')
-    const formInline = ref({
-      startDate: '',
-      endDate: '',
-      name: '',
-      product: '',
-      fileType: '',
-      type: ''
+    const { pageData, handleSizeChange, handleCurrentChange } = page()
+    const data = reactive({
+      loading: false, // 表格加载
+      value1: '', // 查询表单数据
+      dialogFormVisible: false,
+      dateChange: (val: any) => { // 日期范围修改方法
+        formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
+        formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
+      },
+      action: 'api/attLibrary'
     })
-    // 日期范围修改方法
-    const dateChange = (val: string) => {
-      formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
-      formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
-    }
+    const resData = toRefs(data)
+
+    const formInline = ref({ startDate: '', endDate: '', name: '', product: '', fileType: '', type: '' })
     // 搜索
     const search = () => {
       console.log(formInline.value)
@@ -160,16 +170,18 @@ export default defineComponent({
     // 重置
     const reset = () => {
       formInline.value = { startDate: '', endDate: '', name: '', product: '', fileType: '', type: '' }
-      value1.value = ''
+      data.value1 = ''
       getData(formInline.value)
     }
     // 获取表格数据
-    const tableData: typeRow[] = reactive([])
+    const tableData = ref<typeRow[]>([])
     const getData = (query: queryType) => {
-      loading.value = true
-      getAttLibrary(query).then(res => {
-        tableData.splice(0, tableData.length, ...res.data[0].data.data)
-        loading.value = false
+      data.loading = true
+      const queryData = { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }
+      getAttLibrary(queryData).then(res => {
+        tableData.value = res.data.data.records
+        pageData.total = res.data.data.total
+        data.loading = false
       })
     }
     getData(formInline.value)
@@ -178,8 +190,6 @@ export default defineComponent({
      **/
     const fileList = ref<unknown[]>([])
     const editForm: any = ref({})
-    const dialogFormVisible = ref(false)
-    const action = 'api/attLibrary'
 
     const editClick = (row: typeRow) => {
       console.log('****编辑****')
@@ -187,7 +197,7 @@ export default defineComponent({
       if (localStorage.getItem('file') && localStorage.getItem('file') !== null) {
         fileList.value = JSON.parse(localStorage.getItem('file') || '')
       }
-      dialogFormVisible.value = true
+      data.dialogFormVisible = true
     }
     const fileExceed = () => {
       ElMessage.warning('文件超出限制')
@@ -199,13 +209,13 @@ export default defineComponent({
     // 附件提交
     const submitUpload = () => {
       uploadRef.value!.submit()
-      dialogFormVisible.value = false
+      data.dialogFormVisible = false
     }
     const uploadSuccess = (response: any, file:unknown, fileList: unknown) => {
       console.log(response, file)
       if (response[0].status === 200) {
         ElMessage.success('上传成功')
-        dialogFormVisible.value = false
+        data.dialogFormVisible = false
         localStorage.setItem('file', JSON.stringify(fileList))
       } else {
         ElMessage.warning(response.message + '!')
@@ -217,14 +227,14 @@ export default defineComponent({
     }
 
     return {
-      loading, formInline, value1, dateChange, search, reset, tableData, editClick, dialogFormVisible, editForm, fileList, action, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError, checkPermission
+      ...pageData, handleSizeChange, handleCurrentChange, ...resData, formInline, search, reset, tableData, editClick, editForm, fileList, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError, checkPermission
     }
   }
 })
 </script>
 
 <style lang="scss" scoped>
-/deep/ .el-input {
+/deep/.dialogForm .el-input {
   width: 200px;
 }
 .link{

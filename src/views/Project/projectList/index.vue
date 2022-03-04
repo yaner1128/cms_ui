@@ -124,14 +124,24 @@ export default defineComponent({
     const formInline = ref<queryType>({ projectName: '', inStatus: '', startTime: '', endTime: '', productName: '', employeeName: '' })
     // 定义表格数据
     const tableData = ref<rowType[]>([])
+    tableData.value = [{
+      id: 100100,
+      projectName: 'string',
+      inStatus: 1,
+      createTime: '2021-02-01',
+      productName: 'string',
+      employeeName: 'test',
+      saleAmount: '1111'
+    }]
     // 获取数据
     const getData = async (query: queryType) => {
       data.loading = true
       const queryData = { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }
       const params = Object.assign({}, query)
       await getProjectList(params, queryData).then(res => {
+        console.log('*****res*****', res.data)
         tableData.value = res.data.data.records
-        pageData.total = res.data.data.total
+        pageData.total.value = res.data.data.total
         data.loading = false
       }).catch(error => {
         console.log(error)
@@ -145,7 +155,8 @@ export default defineComponent({
      * flag: 是否可编辑标识
      */
     function detailClick (row: rowType, flag: string) {
-      return `/project/details?flag=${flag}&id=${row.id}`
+      console.log(row)
+      return `/project/details?flag=${flag}&id=${row.projectId}`
     }
 
     return {

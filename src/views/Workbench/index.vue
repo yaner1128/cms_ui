@@ -1,11 +1,34 @@
 <template>
   <div class='projectList'>
-    <el-table class="tableBox" v-loading="loading" :data="tableData" :height="480" border>
-      <el-table-column prop="name" label="项目名称" />
-      <el-table-column prop="status" label="状态" />
-      <el-table-column prop="createDate" label="项目新建日期" />
-      <el-table-column prop="product" label="产品" />
-      <el-table-column prop="desc" label="说明" />
+    <div class="headBox">
+      <h1>项目列表</h1>
+      <div>
+        <el-pagination
+          v-model:currentPage="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :small="small"
+          :disabled="disabled"
+          :background="false"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </div>
+    <el-table class="tableBox" v-loading="loading" :data="tableData" :height="420" border>
+      <el-table-column prop="projectName" label="项目名称" />
+      <el-table-column prop="inStatus" label="状态">
+        <template #default="scope">
+          <el-tag v-if="scope.row.inStatus===2" type="" effect="dark">进行中</el-tag>
+          <el-tag v-else-if="scope.row.inStatus===1" type="danger" effect="dark">待付款</el-tag>
+          <span v-else>{{ scope.row.inStatus }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="contractSignDate" label="项目新建日期" />
+      <el-table-column prop="productName" label="产品" />
+      <el-table-column prop="remark" label="说明" />
       <el-table-column prop="amount" label="收款额" />
       <el-table-column label="操作">
         <template #default="scope">
@@ -14,7 +37,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <div class="pictureBox" v-loading="loading">
+    <div class="pictureBox" v-loading="loading2">
       <div class="left">
         <!-- <div class="title">我的收款情况</div> -->
         <div class="barBox" id="barBoxOne" ref="barBoxOne"></div>
@@ -28,37 +51,47 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, onMounted, reactive, ref } from 'vue'
+import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue'
 import * as echarts from 'echarts'
-import { getWorkList, getPieData } from '@/api/workbench'
-import { AxiosResponse } from 'axios'
-import $store from '@/store'
+import Cookies from 'js-cookie'
+import { getProjectUndoneList, getAllCollectionPlans, getListUnfinishedProjects } from '@/api/workbench'
 import checkPermission from '@/utils/permission'
+import { page } from '@/utils/page'
 
 interface typeWorkbench {
-  id:string
-  name:string
-  status: string
-  createDate: string
-  product: string
-  desc: string
-  amount: string
+  projectId: number
+  projectName:string
+  inStatus: number
+  contractSignDate: string
+  productName: string
+  remark: string
+  amount: string|number
 }
 
 export default defineComponent({
   name: 'Workbench',
   components: {},
   setup () {
-    const user = $store.state.userInfo
+    const { pageData, handleSizeChange, handleCurrentChange } = page()
+    const user = Cookies.get('userInfo') ? JSON.parse(Cookies.get('userInfo')) : {}
+
+    const data = reactive({
+      loading: false, // 表格加载标识
+      loading2: false // 图表加载标识
+    })
+    const resData = toRefs(data)
     // 查询当前用户下所有项目
-    const loading = ref(false)
     const tableData = ref<typeWorkbench[]>([])
     const getData = () => {
-      loading.value = true
-      getWorkList({ id: user.id }).then(res => {
-        // console.log(res)
-        tableData.value = res.data[0].data.data
-        loading.value = false
+      data.loading = true
+      const queryData = { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }
+      getProjectUndoneList(queryData).then(res => {
+        tableData.value = res.data.data.records
+        pageData.total.value = res.data.data.total
+        data.loading = false
+      }).catch(error => {
+        console.log(error)
+        data.loading = false
       })
     }
     getData()
@@ -67,7 +100,7 @@ export default defineComponent({
      * row: 当前行数据
      */
     function detailClick (row: typeWorkbench, flag: string) {
-      return `/project/details?flag=${flag}&id=${row.id}`
+      return `/project/details?flag=${flag}&id=${row.projectId}`
     }
 
     const barBoxOne = ref<HTMLElement>()
@@ -79,7 +112,8 @@ export default defineComponent({
         left: 'center'
       },
       tooltip: {
-        trigger: 'item'
+        trigger: 'item',
+        formatter: '{b} : {c} ({d}%)'
       },
       legend: {
         orient: 'vertical',
@@ -90,8 +124,8 @@ export default defineComponent({
           type: 'pie',
           radius: '50%',
           data: [
-            { value: 700, name: '待收款' },
-            { value: 1200, name: '已收款' }
+            { value: 10, name: '待收款' },
+            { value: 7, name: '已收款' }
           ],
           emphasis: {
             itemStyle: {
@@ -109,7 +143,8 @@ export default defineComponent({
         left: 'center'
       },
       tooltip: {
-        trigger: 'item'
+        trigger: 'item',
+        formatter: '{b} : {c} ({d}%)'
       },
       legend: {
         orient: 'vertical',
@@ -120,8 +155,8 @@ export default defineComponent({
           type: 'pie',
           radius: '50%',
           data: [
-            { value: 1048, name: '未完成' },
-            { value: 735, name: '已完成' }
+            { value: 10, name: '未完成' },
+            { value: 7, name: '已完成' }
           ],
           emphasis: {
             itemStyle: {
@@ -133,8 +168,7 @@ export default defineComponent({
         }
       ]
     })
-    const init = (res: AxiosResponse<unknown, unknown>) => {
-      console.log('**res****', res)
+    const init = () => {
       const myChart = echarts.init(barBoxOne.value)
       myChart.setOption(optionOne)
 
@@ -148,12 +182,29 @@ export default defineComponent({
       }
     }
     onMounted(async () => {
-      await getPieData({}).then(res => {
-        init(res)
+      data.loading2 = true
+      const promise1 = getAllCollectionPlans({})
+      const promise2 = getListUnfinishedProjects({})
+      // const promise9 = getSimpleCode(query9)
+      Promise.all([promise1, promise2]).then((res) => {
+        console.log(res)
+        data.loading2 = false
+        optionOne.series[0].data = [
+          { value: res[0].data.data.unPaid, name: '待收款' },
+          { value: res[0].data.data.paidFor, name: '已收款' }
+        ]
+        optionTwo.series[0].data = [
+          { value: res[1].data.data.unfinished, name: '未完成' },
+          { value: res[1].data.data.completed, name: '已完成' }
+        ]
+        init()
+      }).catch((error) => {
+        console.log(error)
+        data.loading2 = false
       })
     })
     return {
-      loading, tableData, detailClick, barBoxOne, barBoxTwo, checkPermission
+      ...resData, tableData, detailClick, barBoxOne, barBoxTwo, checkPermission, ...pageData, handleSizeChange, handleCurrentChange
     }
   }
 })
@@ -163,6 +214,12 @@ export default defineComponent({
 .link{
   text-decoration: none;
   margin: 0 3px;
+}
+.headBox{
+  height: 45px;
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 10px;
 }
 .tableBox{
   width: 100%;

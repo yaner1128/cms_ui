@@ -14,13 +14,13 @@
       <el-table-column fixed prop="name" label="标题" />
       <el-table-column prop="path" label="路径" />
       <el-table-column prop="meta.isShow" label="是否隐藏" />
-      <el-table-column prop="component.__file" label="文件路径" />
+      <el-table-column prop="component.__file" label="模块" />
       <el-table-column prop="redirect" label="重定向" />
       <el-table-column prop="parentId" label="图标" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
           <el-button type="primary" size="small" @click="editClick(scope.row)">编辑</el-button>
-          <el-popconfirm title="确认删除本条数据吗？">
+          <el-popconfirm title="确认删除本条数据吗?">
             <template #reference>
               <el-button type="danger" size="small" @click="deleteClick(scope.row)">删除</el-button>
             </template>
@@ -29,32 +29,30 @@
       </el-table-column>
     </el-table>
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="740px">
-      <el-form :model="form" label-width="80px">
-        <el-form-item label="父级菜单">
-          <el-select v-model="form.region" placeholder="请选择父节点">
+      <el-form ref="refForm" :model="form" label-width="80px" :rules="rules">
+        <el-form-item label="父级菜单" prop="parentId">
+          <el-select v-model="form.parentId" placeholder="请选择父级菜单">
             <el-option label="Zone No.1" value="shanghai"></el-option>
             <el-option label="Zone No.2" value="beijing"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="标题">
-          <el-input v-model="form.name"></el-input>
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="form.title"></el-input>
         </el-form-item>
-        <el-form-item label="路径">
-          <el-input v-model="form.name"></el-input>
+        <el-form-item label="路径" prop="path">
+          <el-input v-model="form.path"></el-input>
         </el-form-item>
-        <el-form-item label="是否隐藏">
-          <el-switch v-model="form.name" />
+        <el-form-item label="是否隐藏" prop="isShow">
+          <el-switch v-model="form.isShow" />
         </el-form-item>
-        <el-form-item label="文件路径">
-          <el-input v-model="form.name"></el-input>
+        <el-form-item label="模块" prop="module">
+          <el-input v-model="form.module"></el-input>
         </el-form-item>
         <el-form-item label="重定向">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.redirect"></el-input>
         </el-form-item>
         <el-form-item label="图标">
-          <!-- <el-input v-model="form.name"></el-input> -->
           <el-dropdown trigger="click">
-            <!-- <el-input v-model="form.name"></el-input> -->
             <div class="iocnBox" v-if="form.name">
               <i class="iconfont" :class="form.name" ></i>
               <i class="iconfont icon-2901cuowu delete" @click.self="deleteIcon"></i>
@@ -84,8 +82,25 @@
 
 <script lang='ts'>
 import router from '@/router'
-import { defineComponent, ref, reactive, toRefs } from 'vue'
+import { defineComponent, ref, reactive, toRefs, onUnmounted } from 'vue'
 
+const rules = reactive({
+  parentId: [
+    { required: true, message: '请选择父级菜单', trigger: 'change' }
+  ],
+  title: [
+    { required: true, message: '请输入标题', trigger: 'blur' }
+  ],
+  path: [
+    { required: true, message: '请输入路径', trigger: 'blur' }
+  ],
+  isShow: [
+    { required: true, message: '请选择所售产品', trigger: 'change' }
+  ],
+  module: [
+    { required: true, message: '请输入模块名称', trigger: 'blur' }
+  ]
+})
 export default defineComponent({
   name: 'depart',
   components: {},
@@ -103,8 +118,9 @@ export default defineComponent({
       curTitle: '新增'
     })
     const resData = toRefs(data)
-    const form = ref({
+    const form = ref<{ [propname: string]: any }>({
       name: '',
+      path: '',
       region: ''
     })
     // 新增
@@ -127,7 +143,6 @@ export default defineComponent({
       }
       tableData.value.push(item)
     })
-    console.log('*****', tableData.value)
     // 查询
     const onSubmit = () => {
       console.log('查询', data.selectName)
@@ -136,6 +151,7 @@ export default defineComponent({
     const editClick = (row: any) => {
       data.dialogFormVisible = true
       data.curTitle = '编辑'
+      form.value = row
       console.log(row)
     }
     // 删除
@@ -145,18 +161,26 @@ export default defineComponent({
     // 取消
     const cancelClick = () => {
       data.dialogFormVisible = false
-      form.value = { name: '', region: '' }
+      form.value = { name: '', region: '', path: '' }
     }
     // 提交
+    const refForm = ref()
     const commitClick = () => {
-      data.dialogFormVisible = false
-      // 提交
-
-      form.value = { name: '', region: '' }
+      refForm.value.validate((valid:boolean) => {
+        if (valid) {
+          data.dialogFormVisible = false
+          // 提交
+          console.log(form.value)
+          form.value = { name: '', region: '', path: '' }
+        }
+      })
     }
+    onUnmounted(() => {
+      console.log(88888)
+    })
 
     return {
-      iconList, selectIcon, deleteIcon, ...resData, form, add, tableData, onSubmit, editClick, deleteClick, cancelClick, commitClick
+      refForm, rules, iconList, selectIcon, deleteIcon, ...resData, form, add, tableData, onSubmit, editClick, deleteClick, cancelClick, commitClick
     }
   }
 })
@@ -168,14 +192,14 @@ export default defineComponent({
 .handleClickBox{
   display: flex;
   padding-bottom: 10px;
-}
-.buttonBox{
-  flex: 1 0 300px;
-}
-.formBox{
-  display: flex;
-  .el-input{
-    margin-right: 20px;
+  .buttonBox{
+    flex: 1 0 300px;
+  }
+  .formBox{
+    display: flex;
+    .el-input{
+      margin-right: 20px;
+    }
   }
 }
 .el-form{
@@ -225,6 +249,9 @@ export default defineComponent({
     top: 0;
     left: 35px;
     font-size: 10px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #f0f0f0;
   }
 }
 </style>

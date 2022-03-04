@@ -8,15 +8,17 @@ module.exports = {
   devServer: {
     host: '0.0.0.0',
     port: 8090,
-    open: true,
+    open: false,
     proxy: {
       '/': {
-        target: 'http://192.168.1.166:8201', // 我的服务器地址
-        changeOrigin: true, // 接口跨域配置
+        // target: 'http://192.168.1.9:8201',
+        target: 'http://192.168.1.166:8201',
+        // target: 'http://192.168.1.213:8201', // 我的服务器地址
+        changeOrigin: true // 接口跨域配置
         // pathRewrite方法重写url
-        pathRewrite: {
-          '^/ctms-auth': ''
-        }
+        // pathRewrite: {
+        //   '^': ''
+        // }
       }
     }
   },

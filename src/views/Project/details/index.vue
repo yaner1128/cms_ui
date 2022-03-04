@@ -29,25 +29,51 @@
       <el-tabs type="border-card">
         <el-tab-pane label="采购合同">
           <el-table :data="purchaseData">
-            <el-table-column prop="date" label="日期" sortable />
-            <el-table-column prop="name" label="名称" sortable />
-            <el-table-column prop="amount" label="合同金额" />
-            <el-table-column prop="status" label="状态"
+            <el-table-column prop="signDate" label="合同签订日期" sortable />
+            <el-table-column prop="contractName" label="合同名称" sortable />
+            <el-table-column prop="amount" label="合同总金额" />
+            <el-table-column prop="inStatus" label="状态"
               :filters="[
-                { text: '完成', value: '完成' },
-                { text: '进行', value: '进行' },
-                { text: '待付款', value: '待付款' },
+                { text: '已完成', value: 2 },
+                { text: '进行中', value: 1 },
+                { text: '待付款', value: 0 },
               ]"
               :filter-method="filterTag">
               <template #default="scope">
-                <el-tag v-if="scope.row.status=='完成'" type="success" effect="dark">{{scope.row.status}}</el-tag>
-                <el-tag v-else-if="scope.row.status=='待付款'" type="danger" effect="dark">{{scope.row.status}}</el-tag>
-                <el-tag v-else type="" effect="dark">{{scope.row.status}}</el-tag>
+                <el-tag v-if="scope.row.status===2" type="success" effect="dark">已完成</el-tag>
+                <el-tag v-else-if="scope.row.status===1" type="" effect="dark">进行中</el-tag>
+                <el-tag v-else-if="scope.row.status===0" type="danger" effect="dark">待付款</el-tag>
+                <span v-else></span>
               </template>
             </el-table-column>
           </el-table>
         </el-tab-pane>
-        <el-tab-pane label="销售合同">销售合同</el-tab-pane>
+        <el-tab-pane label="销售合同">
+          <el-form class="salesBox" label-position="right" label-width="100px" :model="salesData" disabled>
+            <div class="title">{{ salesData.contractName|| '销售合同' }}</div>
+            <el-form-item label="甲方:">
+              <el-input v-model="salesData.partyAName"></el-input>
+            </el-form-item>
+            <el-form-item label="乙方:">
+              <el-input v-model="salesData.partyBName"></el-input>
+            </el-form-item>
+            <el-form-item label="生效日期:">
+              <el-input v-model="salesData.signDate"></el-input>
+            </el-form-item>
+            <el-form-item label="终止日期:">
+              <el-input v-model="salesData.endDate"></el-input>
+            </el-form-item>
+            <el-form-item label="已开票金额:">
+              <el-input v-model="salesData.invoicedAmount"></el-input>
+            </el-form-item>
+            <el-form-item label="已付款金额:">
+              <el-input v-model="salesData.paymentAmount"></el-input>
+            </el-form-item>
+            <el-form-item label="合同总金额:">
+              <el-input v-model="salesData.amount"></el-input>
+            </el-form-item>
+          </el-form>
+        </el-tab-pane>
         <el-tab-pane label="付款计划">
           <div class="title">合同付款计划</div>
           <el-table :data="paymentPlan" border >
@@ -65,9 +91,10 @@
 </template>
 
 <script lang='ts'>
-import { defineComponent, onMounted, ref, nextTick } from 'vue'
-import { getDetails, getContractDetails } from '@/api/details'
+import { defineComponent, onMounted, ref, nextTick, reactive, toRefs } from 'vue'
+import { getContractsByStatus, getSalesContract, getSelectContractId, getDetails } from '@/api/details'
 import router from '@/router'
+import { ElMessage } from 'element-plus'
 
 interface stepListType {
   title: string
@@ -81,10 +108,22 @@ interface detailListType {
   prop: string
 }
 interface purchaseDataType {
-  date: string
-  name: string
+  amount: string;
+  contractId: number;
+  contractName: string;
+  inStatus: number;
+  signDate: string;
+}
+interface salesDataType {
   amount: string
-  status: string
+  contractId: number
+  contractName: string
+  endDate: string
+  invoicedAmount: number
+  partyAName: string
+  partyBName: string
+  paymentAmount: string
+  signDate: string
 }
 interface paymentPlanType {
   date: string
@@ -96,51 +135,88 @@ export default defineComponent({
   name: 'Details',
   components: {},
   setup () {
-    // 加载标识
-    const loading = ref(false)
-    const loading2 = ref(false)
+    const data = reactive({
+      loading: false, // 加载标识
+      loading2: false,
+      projectName: '', // 当前项目名称
+      active: 0, // 步骤条进度
+      getPurchaseData: async (id: number) => { // 采购合同
+        const query = { inStatus: 0, projectId: id }
+        await getContractsByStatus(query).then(res => {
+          purchaseData.value = res.data.records
+        })
+      },
+      getSalesData: async (id: number) => { // 销售合同
+        await getSalesContract({ projectId: id }).then(res => {
+          salesData.value = res.data.data || salesData.value
+        })
+      },
+      getPlanData: (id: number) => {
+        getSelectContractId({ projectId: id }).then(res => {
+          paymentPlan.value = res.data.data
+        })
+      }
+    })
+    const resData = toRefs(data)
+
     // 当前项目详细数据
     const detailList = ref<detailListType[]>([])
-    // 当前项目名称
-    const projectName = ref('')
-    // 步骤条进度
-    const active = ref(0)
     // 步骤条数据
     const stepList = ref<stepListType[]>([])
-    // 调用接口获取数据
-    const getData = (query: any) => {
-      loading.value = true
-      loading2.value = true
-      const params = Object.assign({}, query)
-      getDetails(params).then(res => {
-        loading.value = false
-        projectName.value = res.data[0].data.detailList[0].prop
-        stepList.value = res.data[0].data.setupList
-        detailList.value = res.data[0].data.detailList
-        nextTick(() => {
-          active.value = res.data[0].data.active
-        })
-      })
-      // 获取合同数据
-      getContractDetails(params).then(res => {
-        loading2.value = false
-        purchaseData.value = res.data[0].data.purchaseData
-        paymentPlan.value = res.data[0].data.paymentPlan
-      })
-    }
     // 采购合同数据
     const purchaseData = ref<purchaseDataType[]>([])
+    // 销售合同数据
+    const salesData = ref<salesDataType>({
+      amount: '',
+      contractId: 0,
+      contractName: '衡山县财政数据中心合同',
+      endDate: '',
+      invoicedAmount: 0,
+      partyAName: '',
+      partyBName: '',
+      paymentAmount: '',
+      signDate: ''
+    })
     // 付款计划
     const paymentPlan = ref<paymentPlanType[]>([])
+    // 调用接口获取数据
+    const getData = (query: any) => {
+      data.loading = true
+      // data.loading2 = true
+      const params = Object.assign({}, query)
+      console.log('*****getDetails******', params)
+      getDetails(params).then(res => {
+        data.loading = false
+        console.log('*******', res)
+        // data.projectName = res.data[0].data.detailList[0].prop
+        // stepList.value = res.data[0].data.setupList
+        // detailList.value = res.data[0].data.detailList
+        // nextTick(() => {
+        //   data.active = res.data[0].data.active
+        // })
+      })
+      // 采购合同数据
+      data.getPurchaseData(query.id)
+      // 销售合同数据
+      data.getSalesData(query.id)
+      // 付款计划
+      data.getPlanData(query.id)
+    }
     // 判断是否带参数
-    const query = router.currentRoute.value.query
+    const query = {
+      flag: router.currentRoute.value.query.flag,
+      id: Number(router.currentRoute.value.query.id)
+    }
     const isEdit = ref(false)
     onMounted(() => {
       if (query && query.id) {
         isEdit.value = !!(query.flag && query.flag === 'true')
         getData(query)
       } else {
-        router.push('/project')
+        ElMessage.warning('获取失败, 跳转首页 !')
+        setTimeout(() => {
+          router.push({ path: '/home', replace: true })
+        }, 1000)
       }
     })
     // 编辑状态下点击提交
@@ -159,14 +235,11 @@ export default defineComponent({
         DateList.push({ text: item.date, value: item.date })
       }
     })
-    const filterTag = (value: string, row: purchaseDataType) => {
-      return row.status === value
-    }
-    const filterDate = (value: string, row: purchaseDataType) => {
-      return row.date === value
+    const filterTag = (value: number, row: purchaseDataType) => {
+      return row.inStatus === value
     }
     return {
-      loading, loading2, stepList, active, detailList, purchaseData, paymentPlan, filterTag, filterDate, DateList, projectName, isEdit, commitClick
+      ...resData, stepList, detailList, purchaseData, salesData, paymentPlan, filterTag, DateList, isEdit, commitClick
     }
   }
 })
@@ -218,6 +291,16 @@ export default defineComponent({
   .title{
     font-size: 16px;
     padding: 10px 0;
+  }
+}
+/deep/ .salesBox .el-form-item{
+  margin-bottom: 5px !important;
+}
+.salesBox{
+  .title{
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
   }
 }
 </style>

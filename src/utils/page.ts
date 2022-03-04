@@ -7,7 +7,7 @@ export function page () {
     small: false,
     background: true,
     disabled: false,
-    total: 10
+    total: 1
   })
   const pageData = toRefs(page)
 

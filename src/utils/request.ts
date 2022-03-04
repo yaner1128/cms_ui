@@ -1,11 +1,16 @@
 import axios from 'axios'
+import { getToken } from '@/utils/token'
 // 创建axios实例
 const service = axios.create({
   timeout: 3000 // 请求超时时间
 })
 // 添加请求拦截器
-service.interceptors.request.use(function (config) {
+service.interceptors.request.use(function (config:{ [propname:string]:any }) {
   // 在发送请求之前做些什么
+  if (getToken()) {
+    console.log('****config***', config)
+    config.headers.Authorization = 'Bearer ' + getToken()
+  }
   return config
 }, function (error) {
   // 对请求错误做些什么

@@ -43,7 +43,7 @@ export default createStore({
       localStorage.setItem('permission', '')
       commit('SET_TOKEN', '')
       removeUserInfo()
-      removeToken()
+      // removeToken()
     }
   },
   modules: {
