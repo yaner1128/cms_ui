@@ -8,7 +8,6 @@ const service = axios.create({
 service.interceptors.request.use(function (config:{ [propname:string]:any }) {
   // 在发送请求之前做些什么
   if (getToken()) {
-    console.log('****config***', config)
     config.headers.Authorization = 'Bearer ' + getToken()
   }
   return config

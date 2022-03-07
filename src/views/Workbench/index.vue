@@ -1,7 +1,7 @@
 <template>
   <div class='projectList'>
     <div class="headBox">
-      <h1>项目列表</h1>
+      <h1>待完成项目列表</h1>
       <div>
         <el-pagination
           v-model:currentPage="currentPage"
@@ -18,6 +18,7 @@
       </div>
     </div>
     <el-table class="tableBox" v-loading="loading" :data="tableData" :height="420" border>
+      <el-table-column prop="projectId" label="项目名称" />
       <el-table-column prop="projectName" label="项目名称" />
       <el-table-column prop="inStatus" label="状态">
         <template #default="scope">
@@ -39,11 +40,9 @@
     </el-table>
     <div class="pictureBox" v-loading="loading2">
       <div class="left">
-        <!-- <div class="title">我的收款情况</div> -->
         <div class="barBox" id="barBoxOne" ref="barBoxOne"></div>
       </div>
       <div class="right">
-        <!-- <div class="title">我的项目情况</div> -->
         <div class="barBox" id="barBoxTwo" ref="barBoxTwo"></div>
       </div>
     </div>
@@ -72,12 +71,20 @@ export default defineComponent({
   name: 'Workbench',
   components: {},
   setup () {
-    const { pageData, handleSizeChange, handleCurrentChange } = page()
+    const { pageData } = page()
     const user = Cookies.get('userInfo') ? JSON.parse(Cookies.get('userInfo')) : {}
-
     const data = reactive({
       loading: false, // 表格加载标识
-      loading2: false // 图表加载标识
+      loading2: false, // 图表加载标识
+      handleCurrentChange: (val: number) => {
+        pageData.currentPage.value = val
+        getData()
+      },
+      handleSizeChange: (val: number) => {
+        pageData.pageSize.value = val
+        pageData.currentPage.value = 1
+        getData()
+      }
     })
     const resData = toRefs(data)
     // 查询当前用户下所有项目
@@ -102,7 +109,7 @@ export default defineComponent({
     function detailClick (row: typeWorkbench, flag: string) {
       return `/project/details?flag=${flag}&id=${row.projectId}`
     }
-
+    // 饼图
     const barBoxOne = ref<HTMLElement>()
     const barBoxTwo = ref<HTMLElement>()
     // echarts图表配置
@@ -171,10 +178,8 @@ export default defineComponent({
     const init = () => {
       const myChart = echarts.init(barBoxOne.value)
       myChart.setOption(optionOne)
-
       const myChart2 = echarts.init(barBoxTwo.value)
       myChart2.setOption(optionTwo)
-
       // 自适应大小
       window.onresize = function () {
         myChart2.resize()
@@ -185,9 +190,7 @@ export default defineComponent({
       data.loading2 = true
       const promise1 = getAllCollectionPlans({})
       const promise2 = getListUnfinishedProjects({})
-      // const promise9 = getSimpleCode(query9)
       Promise.all([promise1, promise2]).then((res) => {
-        console.log(res)
         data.loading2 = false
         optionOne.series[0].data = [
           { value: res[0].data.data.unPaid, name: '待收款' },
@@ -204,7 +207,7 @@ export default defineComponent({
       })
     })
     return {
-      ...resData, tableData, detailClick, barBoxOne, barBoxTwo, checkPermission, ...pageData, handleSizeChange, handleCurrentChange
+      ...resData, tableData, detailClick, barBoxOne, barBoxTwo, checkPermission, ...pageData
     }
   }
 })

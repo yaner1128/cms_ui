@@ -1,4 +1,5 @@
-import { reactive, toRefs } from 'vue'
+import { inputEmits } from 'element-plus'
+import { initCustomFormatter, reactive, toRefs } from 'vue'
 
 export function page () {
   const page = reactive({
@@ -14,7 +15,7 @@ export function page () {
   const handleSizeChange = (val: number) => {
     console.log(`${val} items per page`)
   }
-  const handleCurrentChange = (val: number) => {
+  const handleCurrentChange = function (val: number) {
     console.log(`current page: ${val}`)
   }
 

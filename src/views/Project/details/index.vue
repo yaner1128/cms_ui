@@ -1,7 +1,7 @@
 <template>
   <div class='detailBox'>
-    <div class="generalization" v-loading="loading">
-      <span class="title">{{ projectName }}项目情况概览</span>
+    <div class="generalization">
+      <span class="title">{{ detailObj.projectName }}项目情况概览</span>
       <div class="processBox">
         <el-steps :active="active" align-center>
           <el-step v-for="step in stepList"
@@ -15,86 +15,100 @@
           </el-step>
         </el-steps>
       </div>
-      <div class="detailContent" v-if="detailList.length>0">
+      <div class="detailContent">
         <ul>
-          <li v-for="(detail,index) in detailList"
-            :key="index"
-          >
-            <span>{{detail.name}}</span>：<el-input v-model="detail.prop" :disabled="!isEdit"></el-input>
+          <li>
+            <span>项目名称</span>：<el-input v-model="detailObj.projectName" :disabled="!isEdit"></el-input>
+          </li>
+          <li>
+            <span>立项日期</span>：
+            <!-- <el-input v-model="detailObj.contractSignDate" :disabled="!isEdit"></el-input> -->
+            <el-date-picker v-model="detailObj.contractSignDate" type="date" placeholder="请选择招标日期" :disabled="!isEdit"></el-date-picker>
+          </li>
+          <li>
+            <span>项目类型</span>：
+            <!-- <el-input v-model="detailObj.projectType" :disabled="!isEdit"></el-input> -->
+            <el-select v-model="detailObj.projectType" placeholder="请选择项目类型" :disabled="!isEdit">
+              <el-option label="自营软件项目" :value="0"></el-option>
+              <el-option label="采购代理软件" :value="1"></el-option>
+            </el-select>
+          </li>
+          <li>
+            <span>责任人</span>：
+            <!-- <el-input v-model="detailObj.employeeName" :disabled="!isEdit"></el-input> -->
+            <el-select v-model="detailObj.leaderId" placeholder="请选择责任人" :disabled="!isEdit">
+              <el-option v-for="(item,index) in ownerList" :key="index" :label="item.employeeName" :value="item.employeeId"></el-option>
+            </el-select>
+          </li>
+          <li>
+            <span>是否招投标项目</span>：
+            <!-- <el-input v-model="detailObj.isBidding" :disabled="!isEdit"></el-input> -->
+            <el-select v-model="detailObj.isBidding" placeholder="请选择项目类型" :disabled="!isEdit">
+              <el-option label="是" value="1"></el-option>
+              <el-option label="否" value="0"></el-option>
+            </el-select>
+          </li>
+          <li>
+            <span>中标日期</span>：<el-input v-model="detailObj.winBiddingDate" :disabled="!isEdit"></el-input>
+          </li>
+          <li>
+            <span>采购金额</span>：<el-input v-model="detailObj.purchaseAmount" :disabled="!isEdit"></el-input>
+          </li>
+          <li>
+            <span>销售金额</span>：<el-input v-model="detailObj.saleAmount" :disabled="!isEdit"></el-input>
+          </li>
+          <li>
+            <span>项目产品</span>：
+            <el-select v-model="detailObj.productId" placeholder="请选择所售产品" :disabled="!isEdit">
+              <el-option v-for="(item,index) in productList" :key="index" :label="item.productName" :value="item.productId"></el-option>
+            </el-select>
+          </li>
+          <li>
+            <span>是否已验收</span>：
+            <el-select v-model="detailObj.isChecked" placeholder="是否已验收" :disabled="!isEdit">
+              <el-option label="是" value="是"></el-option>
+              <el-option label="否" value="否"></el-option>
+            </el-select>
+          </li>
+          <li>
+            <span>项目附件</span>：
+            <el-button type="text" @click="fileListClick">附件</el-button>
           </li>
         </ul>
+        <div class="buttonList">
+          <el-button v-show="isEdit" type="primary" @click="commitClick">确认</el-button>
+        </div>
       </div>
     </div>
-    <div class="contract" v-loading="loading2">
+    <el-dialog v-model="dialogTableVisible" title="附件列表">
+      <my-up-load :fileList="fileList" :isEdit="isEdit"></my-up-load>
+    </el-dialog>
+    <div class="contract">
       <el-tabs type="border-card">
         <el-tab-pane label="采购合同">
-          <el-table :data="purchaseData">
-            <el-table-column prop="signDate" label="合同签订日期" sortable />
-            <el-table-column prop="contractName" label="合同名称" sortable />
-            <el-table-column prop="amount" label="合同总金额" />
-            <el-table-column prop="inStatus" label="状态"
-              :filters="[
-                { text: '已完成', value: 2 },
-                { text: '进行中', value: 1 },
-                { text: '待付款', value: 0 },
-              ]"
-              :filter-method="filterTag">
-              <template #default="scope">
-                <el-tag v-if="scope.row.status===2" type="success" effect="dark">已完成</el-tag>
-                <el-tag v-else-if="scope.row.status===1" type="" effect="dark">进行中</el-tag>
-                <el-tag v-else-if="scope.row.status===0" type="danger" effect="dark">待付款</el-tag>
-                <span v-else></span>
-              </template>
-            </el-table-column>
-          </el-table>
+          <myPurchase :id="projectId"></myPurchase>
         </el-tab-pane>
         <el-tab-pane label="销售合同">
-          <el-form class="salesBox" label-position="right" label-width="100px" :model="salesData" disabled>
-            <div class="title">{{ salesData.contractName|| '销售合同' }}</div>
-            <el-form-item label="甲方:">
-              <el-input v-model="salesData.partyAName"></el-input>
-            </el-form-item>
-            <el-form-item label="乙方:">
-              <el-input v-model="salesData.partyBName"></el-input>
-            </el-form-item>
-            <el-form-item label="生效日期:">
-              <el-input v-model="salesData.signDate"></el-input>
-            </el-form-item>
-            <el-form-item label="终止日期:">
-              <el-input v-model="salesData.endDate"></el-input>
-            </el-form-item>
-            <el-form-item label="已开票金额:">
-              <el-input v-model="salesData.invoicedAmount"></el-input>
-            </el-form-item>
-            <el-form-item label="已付款金额:">
-              <el-input v-model="salesData.paymentAmount"></el-input>
-            </el-form-item>
-            <el-form-item label="合同总金额:">
-              <el-input v-model="salesData.amount"></el-input>
-            </el-form-item>
-          </el-form>
+          <my-sales></my-sales>
         </el-tab-pane>
         <el-tab-pane label="付款计划">
-          <div class="title">合同付款计划</div>
-          <el-table :data="paymentPlan" border >
-            <el-table-column prop="date" label="付款日期" />
-            <el-table-column prop="rate" label="付款比例"  />
-            <el-table-column prop="amount" label="金额" />
-          </el-table>
+          <my-payment-plan></my-payment-plan>
         </el-tab-pane>
       </el-tabs>
     </div>
-    <el-affix v-if="isEdit" position="bottom" :offset="10" style="text-align:center">
-      <el-button type="primary" @click="commitClick">确认</el-button>
-    </el-affix>
   </div>
 </template>
 
 <script lang='ts'>
 import { defineComponent, onMounted, ref, nextTick, reactive, toRefs } from 'vue'
-import { getContractsByStatus, getSalesContract, getSelectContractId, getDetails } from '@/api/details'
+import { getDetails, updateDetails } from '@/api/details'
+import { getProducts, getUserList } from '@/api/created'
 import router from '@/router'
 import { ElMessage } from 'element-plus'
+import myPurchase from './modules/purchase.vue'
+import mySales from './modules/sales.vue'
+import myPaymentPlan from './modules/paymentPlan.vue'
+import myUpLoad from '@/components/upload.vue'
 
 interface stepListType {
   title: string
@@ -103,114 +117,71 @@ interface stepListType {
   desc2?: string
   id: string
 }
-interface detailListType {
-  name: string
-  prop: string
-}
-interface purchaseDataType {
-  amount: string;
-  contractId: number;
-  contractName: string;
-  inStatus: number;
-  signDate: string;
-}
-interface salesDataType {
-  amount: string
-  contractId: number
-  contractName: string
-  endDate: string
-  invoicedAmount: number
-  partyAName: string
-  partyBName: string
-  paymentAmount: string
-  signDate: string
-}
-interface paymentPlanType {
-  date: string
-  rate: string
-  amount: string
+interface fileType {
+  uploadTime: string;
+  attachmentName: string;
+  projectName: string;
+  fileType: string;
+  attchmentType: string;
+  [propname: string]: any;
 }
 
 export default defineComponent({
   name: 'Details',
-  components: {},
+  components: { myPurchase, mySales, myPaymentPlan, myUpLoad },
   setup () {
     const data = reactive({
-      loading: false, // 加载标识
-      loading2: false,
-      projectName: '', // 当前项目名称
-      active: 0, // 步骤条进度
-      getPurchaseData: async (id: number) => { // 采购合同
-        const query = { inStatus: 0, projectId: id }
-        await getContractsByStatus(query).then(res => {
-          purchaseData.value = res.data.records
-        })
-      },
-      getSalesData: async (id: number) => { // 销售合同
-        await getSalesContract({ projectId: id }).then(res => {
-          salesData.value = res.data.data || salesData.value
-        })
-      },
-      getPlanData: (id: number) => {
-        getSelectContractId({ projectId: id }).then(res => {
-          paymentPlan.value = res.data.data
-        })
-      }
+      dialogTableVisible: false,
+      projectId: 0,
+      active: 0 // 步骤条进度
     })
     const resData = toRefs(data)
-
+    const ownerList = ref<{[propname:string]:any}[]>([])
+    const productList = ref<{productName: string, productId: number}[]>([])
     // 当前项目详细数据
-    const detailList = ref<detailListType[]>([])
+    const detailObj = ref({ projectName: '', contractSignDate: '', projectType: '', leaderId: '', isBidding: '', winBiddingDate: '', purchaseAmount: '', saleAmount: '', productId: '', isChecked: '' })
     // 步骤条数据
     const stepList = ref<stepListType[]>([])
-    // 采购合同数据
-    const purchaseData = ref<purchaseDataType[]>([])
-    // 销售合同数据
-    const salesData = ref<salesDataType>({
-      amount: '',
-      contractId: 0,
-      contractName: '衡山县财政数据中心合同',
-      endDate: '',
-      invoicedAmount: 0,
-      partyAName: '',
-      partyBName: '',
-      paymentAmount: '',
-      signDate: ''
-    })
-    // 付款计划
-    const paymentPlan = ref<paymentPlanType[]>([])
-    // 调用接口获取数据
+    // 附件操作
+    const fileList = ref<fileType[]>([])
+    const fileListClick = () => {
+      fileList.value = [{
+        uploadTime: 'string',
+        attachmentName: 'string',
+        projectName: 'string',
+        fileType: 'string',
+        attchmentType: 'string'
+      }]
+      data.dialogTableVisible = true
+      // fileList.value = detailObj.value.fileList
+    }
+    // 调用接口获取详情数据
     const getData = (query: any) => {
-      data.loading = true
-      // data.loading2 = true
       const params = Object.assign({}, query)
-      console.log('*****getDetails******', params)
       getDetails(params).then(res => {
-        data.loading = false
-        console.log('*******', res)
-        // data.projectName = res.data[0].data.detailList[0].prop
+        detailObj.value = res.data.data
         // stepList.value = res.data[0].data.setupList
-        // detailList.value = res.data[0].data.detailList
         // nextTick(() => {
         //   data.active = res.data[0].data.active
         // })
       })
-      // 采购合同数据
-      data.getPurchaseData(query.id)
-      // 销售合同数据
-      data.getSalesData(query.id)
-      // 付款计划
-      data.getPlanData(query.id)
+      const promise4 = getUserList()
+      const promise5 = getProducts()
+      Promise.all([promise4, promise5]).then((res) => {
+        ownerList.value = res[0].data.data
+        productList.value = res[1].data.data
+      })
     }
     // 判断是否带参数
     const query = {
-      flag: router.currentRoute.value.query.flag,
+      isEdit: router.currentRoute.value.query.flag === 'true',
       id: Number(router.currentRoute.value.query.id)
     }
-    const isEdit = ref(false)
+    const isEdit = ref<boolean>(false)
     onMounted(() => {
       if (query && query.id) {
-        isEdit.value = !!(query.flag && query.flag === 'true')
+        data.projectId = query.id
+        isEdit.value = query.isEdit
         getData(query)
       } else {
         ElMessage.warning('获取失败, 跳转首页 !')
@@ -222,24 +193,13 @@ export default defineComponent({
     // 编辑状态下点击提交
     const commitClick = () => {
       isEdit.value = false
-      console.log(detailList)
-    }
-    /*
-     *  筛选方法
-    */
-    const DateList: unknown[] = []
-    const temp: unknown[] = []
-    purchaseData.value.forEach((item: any) => {
-      if (!temp.includes(item.date)) {
-        temp.push(item.date)
-        DateList.push({ text: item.date, value: item.date })
-      }
-    })
-    const filterTag = (value: number, row: purchaseDataType) => {
-      return row.inStatus === value
+      console.log(detailObj.value)
+      updateDetails(detailObj.value).then(res => {
+        console.log('//////', res.data)
+      })
     }
     return {
-      ...resData, stepList, detailList, purchaseData, salesData, paymentPlan, filterTag, DateList, isEdit, commitClick
+      ...resData, stepList, ownerList, productList, detailObj, isEdit, commitClick, fileList, fileListClick
     }
   }
 })
@@ -252,8 +212,14 @@ export default defineComponent({
 /deep/ .is-disabled .el-input__inner{
   color: #000 !important;
 }
-/deep/ .el-button {
-  width: 100px;
+// /deep/ .el-button {
+//   width: 100px;
+// }
+/deep/ .el-button--text{
+  width: auto;
+}
+/deep/ tbody .el-button{
+  width: auto !important;
 }
 .generalization{
   margin-bottom: 30px;
@@ -271,19 +237,23 @@ export default defineComponent({
     ul{
       display: flex;
       flex-wrap: wrap;
-      width: 88%;
+      width: 100%;
       span{
-        width: 80px;
+        width: 100px;
       }
       li{
         display: flex;
         align-items: center;
         height: 35px;
-        width: 35%;
+        width: 30%;
         font-size: 13px;
         // font-weight: 600;
         padding: 5px 0;
       }
+    }
+    .buttonList{
+      display: flex;
+      justify-content: center;
     }
   }
 }

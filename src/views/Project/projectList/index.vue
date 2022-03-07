@@ -35,14 +35,15 @@
       </el-form-item>
     </el-form>
     <!-- 表格 -->
-    <el-table v-loading="loading" :data="tableData" border style="width: 100%">
+    <el-table v-loading="loading" :data="tableData" border style="width: 100%" height="740px">
+      <el-table-column prop="projectId" label="项目ID" />
       <el-table-column prop="projectName" label="项目名称" />
-      <el-table-column prop="inStatus" label="状态">
+      <el-table-column prop="status" label="状态">
         <template #default="scope">
-          <el-tag v-if="scope.row.inStatus===3" type="success" effect="dark">已完成</el-tag>
-          <el-tag v-else-if="scope.row.inStatus===2" type="" effect="dark">进行中</el-tag>
-          <el-tag v-else-if="scope.row.inStatus===1" type="danger" effect="dark">待付款</el-tag>
-          <el-tag v-else-if="scope.row.inStatus===0" type="info" effect="dark">已废止</el-tag>
+          <el-tag v-if="scope.row.status===3" type="success" effect="dark">已完成</el-tag>
+          <el-tag v-else-if="scope.row.status===2" type="" effect="dark">进行中</el-tag>
+          <el-tag v-else-if="scope.row.status===1" type="danger" effect="dark">待付款</el-tag>
+          <el-tag v-else-if="scope.row.status===0" type="info" effect="dark">已废止</el-tag>
           <span v-else></span>
         </template>
       </el-table-column>
@@ -91,7 +92,7 @@ interface queryType {
 // 表格数据类型
 interface rowType{
   projectName: string;
-  inStatus: number|string;
+  status: number|string;
   createTime: string;
   productName: string;
   employeeName: string;
@@ -102,7 +103,7 @@ export default defineComponent({
   name: 'projectList',
   components: {},
   setup () {
-    const { pageData, handleSizeChange, handleCurrentChange } = page()
+    const { pageData } = page()
     const data = reactive({
       loading: false, // 表格加载
       value1: '', // 时间
@@ -111,12 +112,21 @@ export default defineComponent({
         formInline.value.endTime = format(new Date(val[1]), 'yyyy-MM-dd')
       },
       search: () => { // 搜索查询
-        getData(formInline.value)
+        getData()
       },
       reset: () => { // 重置
         formInline.value = { projectName: '', inStatus: '', startTime: '', endTime: '', productName: '', employeeName: '' }
         data.value1 = ''
-        getData(formInline.value)
+        getData()
+      },
+      handleCurrentChange: (val: number) => {
+        pageData.currentPage.value = val
+        getData()
+      },
+      handleSizeChange: (val: number) => {
+        pageData.pageSize.value = val
+        pageData.currentPage.value = 1
+        getData()
       }
     })
     const resData = toRefs(data)
@@ -125,21 +135,20 @@ export default defineComponent({
     // 定义表格数据
     const tableData = ref<rowType[]>([])
     tableData.value = [{
-      id: 100100,
+      projectId: 1,
       projectName: 'string',
-      inStatus: 1,
+      status: 1,
       createTime: '2021-02-01',
       productName: 'string',
       employeeName: 'test',
       saleAmount: '1111'
     }]
     // 获取数据
-    const getData = async (query: queryType) => {
+    const getData = () => {
       data.loading = true
-      const queryData = { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }
-      const params = Object.assign({}, query)
-      await getProjectList(params, queryData).then(res => {
-        console.log('*****res*****', res.data)
+      const params = Object.assign({}, formInline.value)
+      getProjectList(params, { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }).then(res => {
+        console.log(res.data)
         tableData.value = res.data.data.records
         pageData.total.value = res.data.data.total
         data.loading = false
@@ -148,19 +157,18 @@ export default defineComponent({
         data.loading = false
       })
     }
-    getData(formInline.value)
+    getData()
     /*
      * 查看详情
      * row: 当前行数据
      * flag: 是否可编辑标识
      */
     function detailClick (row: rowType, flag: string) {
-      console.log(row)
       return `/project/details?flag=${flag}&id=${row.projectId}`
     }
 
     return {
-      ...resData, formInline, tableData, detailClick, checkPermission, ...pageData, handleSizeChange, handleCurrentChange
+      ...resData, formInline, tableData, detailClick, checkPermission, ...pageData
     }
   }
 })

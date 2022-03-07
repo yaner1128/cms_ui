@@ -12,10 +12,10 @@
         </el-date-picker>
       </el-form-item>
       <el-form-item>
-        <el-input v-model="formInline.name" clearable placeholder="请输入附件名称"></el-input>
+        <el-input v-model="formInline.attachmentName" clearable placeholder="请输入附件名称"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-input v-model="formInline.product" clearable placeholder="请输入项目"></el-input>
+        <el-input v-model="formInline.projectName" clearable placeholder="请输入项目"></el-input>
       </el-form-item>
       <el-form-item>
         <el-select v-model="formInline.fileType" clearable placeholder="请选择文件类型">
@@ -26,7 +26,7 @@
         </el-select>
       </el-form-item>
       <el-form-item>
-        <el-select v-model="formInline.type" clearable placeholder="请选择附件类型">
+        <el-select v-model="formInline.attchmentType" clearable placeholder="请选择附件类型">
           <el-option label="PDF" value="PDF"></el-option>
           <el-option label="图片" value="图片"></el-option>
         </el-select>
@@ -34,18 +34,18 @@
       <el-form-item>
         <el-button type="primary" @click="search">搜索</el-button>
         <el-button type="success" @click="reset">重置</el-button>
+        <el-button type="warning" @click="add">新增</el-button>
       </el-form-item>
     </el-form>
     <el-table v-loading="loading" :data="tableData" max-height="800" border>
-      <el-table-column prop="date" label="上传日期" />
-      <el-table-column prop="name" label="名称" />
-      <el-table-column prop="product" label="所属项目" />
+      <el-table-column prop="uploadTime" label="上传日期" />
+      <el-table-column prop="attachmentName" label="名称" />
+      <el-table-column prop="projectName" label="所属项目" />
       <el-table-column prop="fileType" label="文件类型" />
-      <el-table-column prop="product2" label="所属项目" width="300px" />
-      <el-table-column prop="enclosureType" label="附件类型" />
+      <el-table-column prop="attchmentType" label="附件类型" />
       <el-table-column label="操作">
         <template #default="scope">
-          <a class="link" :href="scope.row.url" target="_blank">查看</a>
+          <a class="link" :href="scope.row.attachUrl" target="_blank">查看</a>
           <a class="link" v-if="checkPermission(['ADMIN'])" @click="editClick(scope.row)">编辑</a>
         </template>
       </el-table-column>
@@ -62,22 +62,19 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     />
-    <el-dialog v-model="dialogFormVisible" :title="editForm.name">
+    <el-dialog v-model="dialogFormVisible" :title="dialogTitle">
       <el-form class="dialogForm" :model="editForm" label-width="80px">
-        <el-form-item label="名称" prop="name">
-          <el-input v-model="editForm.name"></el-input>
+        <el-form-item label="名称" prop="attachmentName" placeholder="请输入附件名称">
+          <el-input v-model="editForm.attachmentName"></el-input>
         </el-form-item>
-        <el-form-item label="所属项目" prop="product">
-          <el-input v-model="editForm.product"></el-input>
+        <el-form-item label="所属项目" prop="projectName" placeholder="请选择所属项目">
+          <el-input v-model="editForm.projectName"></el-input>
         </el-form-item>
-        <el-form-item label="文件类型" prop="fileType">
+        <el-form-item label="文件类型" prop="fileType" placeholder="请选择文件类型">
           <el-input v-model="editForm.fileType"></el-input>
         </el-form-item>
-        <el-form-item label="所属项目" prop="product2">
-          <el-input v-model="editForm.product2"></el-input>
-        </el-form-item>
-        <el-form-item label="附件类型" prop="enclosureType">
-          <el-select v-model="editForm.enclosureType">
+        <el-form-item label="附件类型" prop="attchmentType">
+          <el-select v-model="editForm.attchmentType" placeholder="请选择附件类型">
             <el-option label="PDF" value="pdf"></el-option>
             <el-option label="图片" value="图片"></el-option>
           </el-select>
@@ -120,29 +117,28 @@
 import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElUpload } from 'element-plus'
-import { getAttLibrary } from '@/api/attLibrary'
+import { getAttLibrary, addEnclosure, deleteEnclosure } from '@/api/attLibrary'
 import { format } from '@/utils/dateFormat'
 import checkPermission from '@/utils/permission'
 import { page } from '@/utils/page'
-import { number } from 'node_modules/_echarts@5.3.0@echarts'
 
 interface queryType {
-  startDate: string
-  endDate: string
-  name: string
-  product: string
-  fileType: string
-  type: string
+  attachmentName: string;
+  projectName: string;
+  fileType: string;
+  attchmentType: string;
+  startDate: string;
+  endDate: string;
+  [propname: string]: any
 }
 interface typeRow{
-  id: string
-  date: string
-  name: string
-  product: string
-  fileType: string
-  product2: string
-  enclosureType: string
-  url: string
+  attachmentName: string;
+  projectName: string;
+  fileType: string;
+  attchmentType: string;
+  startDate: string;
+  endDate: string;
+  [propname: string]: any
 }
 export default defineComponent({
   name: 'AttLibaray',
@@ -157,30 +153,41 @@ export default defineComponent({
         formInline.value.startDate = format(new Date(val[0]), 'yyyy-MM-dd')
         formInline.value.endDate = format(new Date(val[1]), 'yyyy-MM-dd')
       },
+      search: () => { // 搜索
+        getData(formInline.value)
+      },
+      reset: () => { // 重置
+        formInline.value = { attachmentName: '', projectName: '', fileType: '', attchmentType: '', startDate: '', endDate: '' }
+        data.value1 = ''
+        getData(formInline.value)
+      },
+      dialogTitle: '',
+      add: () => {
+        data.dialogFormVisible = true
+        data.dialogTitle = '新增'
+        editForm.value = { attachmentName: '', projectName: '', fileType: '', attchmentType: '', startDate: '', endDate: '' }
+      },
       action: 'api/attLibrary'
     })
     const resData = toRefs(data)
-
-    const formInline = ref({ startDate: '', endDate: '', name: '', product: '', fileType: '', type: '' })
-    // 搜索
-    const search = () => {
-      console.log(formInline.value)
-      getData(formInline.value)
-    }
-    // 重置
-    const reset = () => {
-      formInline.value = { startDate: '', endDate: '', name: '', product: '', fileType: '', type: '' }
-      data.value1 = ''
-      getData(formInline.value)
-    }
+    // 搜索表单数据
+    const formInline = ref<queryType>({ attachmentName: '', projectName: '', fileType: '', attchmentType: '', startDate: '', endDate: '' })
     // 获取表格数据
     const tableData = ref<typeRow[]>([])
-    const getData = (query: queryType) => {
+    const getData = async (query: queryType) => {
       data.loading = true
-      const queryData = { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }
-      getAttLibrary(queryData).then(res => {
+      query = Object.assign({ currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }, query)
+      let queryStr = ''
+      console.log(query)
+      for (var k in query) {
+        if (query[k]) {
+          queryStr += `${k}=${query[k]}&`
+        }
+      }
+      await getAttLibrary(queryStr.slice(0, -1)).then(res => {
+        console.log(res.data)
         tableData.value = res.data.data.records
-        pageData.total = res.data.data.total
+        pageData.total.value = res.data.data.total
         data.loading = false
       })
     }
@@ -189,16 +196,17 @@ export default defineComponent({
      * 编辑
      **/
     const fileList = ref<unknown[]>([])
-    const editForm: any = ref({})
+    const editForm = ref<typeRow>({ attachmentName: '', projectName: '', fileType: '', attchmentType: '', startDate: '', endDate: '' })
 
     const editClick = (row: typeRow) => {
-      console.log('****编辑****')
-      editForm.value = Object.assign({}, row)
-      if (localStorage.getItem('file') && localStorage.getItem('file') !== null) {
-        fileList.value = JSON.parse(localStorage.getItem('file') || '')
-      }
       data.dialogFormVisible = true
+      data.dialogTitle = '编辑'
+      editForm.value = Object.assign({}, row)
+      // if (localStorage.getItem('file') && localStorage.getItem('file') !== null) {
+      //   fileList.value = JSON.parse(localStorage.getItem('file') || '')
+      // }
     }
+    // 附件相关
     const fileExceed = () => {
       ElMessage.warning('文件超出限制')
     }
@@ -227,7 +235,7 @@ export default defineComponent({
     }
 
     return {
-      ...pageData, handleSizeChange, handleCurrentChange, ...resData, formInline, search, reset, tableData, editClick, editForm, fileList, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError, checkPermission
+      ...pageData, handleSizeChange, handleCurrentChange, ...resData, formInline, tableData, editClick, editForm, fileList, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError, checkPermission
     }
   }
 })

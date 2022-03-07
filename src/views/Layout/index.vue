@@ -103,7 +103,6 @@ export default defineComponent({
       })
       return item.meta?.isShow
     })
-    console.log(routerList)
     const userInfo = ref({
       id: '',
       username: ''

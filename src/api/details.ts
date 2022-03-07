@@ -2,7 +2,7 @@ import request from '@/utils/request'
 // 采购合同
 export function getContractsByStatus (data:{ inStatus: number, projectId:number }) {
   return request({
-    url: '/ctms-project/prjcontracts/getContractsByStatus',
+    url: '/prjContracts/getContractsByStatus',
     method: 'post',
     data: data
   })
@@ -10,22 +10,30 @@ export function getContractsByStatus (data:{ inStatus: number, projectId:number 
 // 销售合同
 export function getSalesContract (data:{ projectId: number }) {
   return request({
-    url: `/ctms-project/prjcontracts/getSalesContract?projectId=${data.projectId}`,
+    url: `/prjContracts/getSalesContract?projectId=${data.projectId}`,
     method: 'post'
   })
 }
 // 付款计划
 export function getSelectContractId (data:{ projectId: number }) {
   return request({
-    url: `/ctms-project/payment/selectContractId?contractId=${data.projectId}`,
+    url: `/prjPaymentPlan/selectContractId?projectId=${data.projectId}`,
     method: 'post'
   })
 }
 // 获取项目详情
 export function getDetails (params: { id: number}) {
   return request({
-    url: '/ctms-project/project/detail?projectId=' + params.id,
+    url: '/prjProjects/selectdDtails?projectId=' + params.id,
     method: 'get'
+  })
+}
+// 编辑项目详情
+export function updateDetails (data: any) {
+  return request({
+    url: '/prjProjects/updateProjectsById',
+    method: 'post',
+    data
   })
 }
 
