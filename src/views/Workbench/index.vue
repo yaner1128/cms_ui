@@ -18,19 +18,20 @@
       </div>
     </div>
     <el-table class="tableBox" v-loading="loading" :data="tableData" :height="420" border>
-      <el-table-column prop="projectId" label="项目名称" />
+      <el-table-column prop="projectId" label="项目ID" />
       <el-table-column prop="projectName" label="项目名称" />
-      <el-table-column prop="inStatus" label="状态">
+      <el-table-column prop="status" label="状态">
         <template #default="scope">
-          <el-tag v-if="scope.row.inStatus===2" type="" effect="dark">进行中</el-tag>
-          <el-tag v-else-if="scope.row.inStatus===1" type="danger" effect="dark">待付款</el-tag>
-          <span v-else>{{ scope.row.inStatus }}</span>
+          <el-tag v-if="scope.row.status==3" type="success" effect="dark">已完成</el-tag>
+          <el-tag v-else-if="scope.row.status==2" type="" effect="dark">进行中</el-tag>
+          <el-tag v-else-if="scope.row.status==1" type="danger" effect="dark">待付款</el-tag>
+          <el-tag v-else type="info" effect="dark">已废止</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="contractSignDate" label="项目新建日期" />
       <el-table-column prop="productName" label="产品" />
       <el-table-column prop="remark" label="说明" />
-      <el-table-column prop="amount" label="收款额" />
+      <el-table-column prop="saleAmount" label="收款额" />
       <el-table-column label="操作">
         <template #default="scope">
           <router-link class="link" :to="detailClick(scope.row,'false')">查看</router-link>
@@ -60,11 +61,11 @@ import { page } from '@/utils/page'
 interface typeWorkbench {
   projectId: number
   projectName:string
-  inStatus: number
+  status: number
   contractSignDate: string
   productName: string
   remark: string
-  amount: string|number
+  saleAmount: string|number
 }
 
 export default defineComponent({
@@ -188,8 +189,8 @@ export default defineComponent({
     }
     onMounted(async () => {
       data.loading2 = true
-      const promise1 = getAllCollectionPlans({})
-      const promise2 = getListUnfinishedProjects({})
+      const promise1 = getAllCollectionPlans()
+      const promise2 = getListUnfinishedProjects()
       Promise.all([promise1, promise2]).then((res) => {
         data.loading2 = false
         optionOne.series[0].data = [

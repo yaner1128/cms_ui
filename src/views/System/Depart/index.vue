@@ -5,20 +5,19 @@
         <el-button type="primary" @click="add">+ 添加</el-button>
       </div>
       <div class="formBox">
-        <el-input v-model="selectName" placeholder="请输入名称"></el-input>
+        <el-input v-model="depName" placeholder="请输入名称"></el-input>
         <el-button type="primary" @click="onSubmit">查询</el-button>
       </div>
     </div>
     <el-table :data="tableData" border
-      row-key="id"
+      row-key="depId"
       default-expand-all
       :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
     >
       <el-table-column type="selection" />
-      <el-table-column fixed prop="name" label="名称" />
-      <el-table-column prop="parentId" label="上级部门" />
-      <el-table-column prop="sort" label="排序" />
-      <el-table-column prop="createDate" label="创建时间" />
+      <el-table-column fixed prop="depName" label="名称" />
+      <!-- <el-table-column prop="parentId" label="上级部门" /> -->
+      <el-table-column prop="createTime" label="创建时间" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
           <el-button type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
@@ -30,33 +29,15 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination
-      v-model:currentPage="currentPage"
-      v-model:page-size="pageSize"
-      :page-sizes="[10, 20, 50, 100]"
-      :small="small"
-      :disabled="disabled"
-      :background="background"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-    </el-pagination>
-
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="600px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="上级部门">
           <el-select v-model="form.region" placeholder="请选择上级部门">
-            <el-option label="Zone No.1" value="shanghai"></el-option>
-            <el-option label="Zone No.2" value="beijing"></el-option>
+            <el-option v-for="item in tableData" :key="item" :label="item.depName" :value="item.depId"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="名称">
-          <el-input v-model="form.name" autocomplete="off"></el-input>
-        </el-form-item>
-        <el-form-item label="排序">
-          <el-input v-model="form.name" autocomplete="off"></el-input>
+          <el-input v-model="form.depName" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -71,42 +52,59 @@
 
 <script lang='ts'>
 import { defineComponent, ref, reactive, toRefs } from 'vue'
-import { page } from '@/utils/page'
+import { getAllDepartmentsPage, addDepart } from '@/api/depart'
 
 export default defineComponent({
   name: 'depart',
   components: {},
   setup () {
-    const { pageData, handleSizeChange, handleCurrentChange } = page()
     const data = reactive({
-      selectName: '',
+      depName: '',
       dialogFormVisible: false,
-      curTitle: '新增'
+      curTitle: '新增',
+      onSubmit: () => { // 查询
+        getData()
+      }
     })
     const form = ref({
-      name: '',
+      depName: '',
       region: ''
     })
     const resData = toRefs(data)
+    // 表格数据
+    const tableData = ref<any[]>([])
+    const allDepart = ref<any[]>([])
+    const getData = () => {
+      const params = { depName: data.depName }
+      getAllDepartmentsPage(params).then((res:any) => {
+        console.log(res.data)
+        tableData.value = res.data.data
+        function getDepart (arr: any) {
+          // eslint-disable-next-line no-debugger
+          debugger
+          if (arr.children) {
+            getDepart(arr.children)
+          } else {
+            allDepart.value.push()
+          }
+        }
+        getDepart(tableData.value)
+      })
+    }
+    getData()
     // 新增
     const add = (row: any) => {
       data.dialogFormVisible = true
       data.curTitle = '新增'
       console.log(row)
-    }
-    // 表格数据
-    const tableData = ref<any[]>([
-      { name: 111 }
-    ])
-    // 查询
-    const onSubmit = () => {
-      console.log('查询', data.selectName)
+      addDepart(row).then(res => {
+        console.log(res)
+      })
     }
     // 编辑
     const editClick = (row: any) => {
       data.dialogFormVisible = true
       data.curTitle = '编辑'
-      console.log(row)
     }
     // 删除
     const deleteClick = (row: any) => {
@@ -115,18 +113,17 @@ export default defineComponent({
     // 取消
     const cancelClick = () => {
       data.dialogFormVisible = false
-      form.value = { name: '', region: '' }
+      form.value = { depName: '', region: '' }
     }
     // 提交
     const commitClick = () => {
       data.dialogFormVisible = false
       // 提交
-
-      form.value = { name: '', region: '' }
+      form.value = { depName: '', region: '' }
     }
 
     return {
-      ...resData, form, add, tableData, onSubmit, editClick, deleteClick, cancelClick, commitClick, ...pageData, handleSizeChange, handleCurrentChange
+      ...resData, form, add, tableData, editClick, deleteClick, cancelClick, commitClick
     }
   }
 })

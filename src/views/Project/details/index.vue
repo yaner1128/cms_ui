@@ -4,13 +4,28 @@
       <span class="title">{{ detailObj.projectName }}项目情况概览</span>
       <div class="processBox">
         <el-steps :active="active" align-center>
-          <el-step v-for="step in stepList"
-            :key="step.id"
-            :title="step.title"
-            :description="step.description">
+          <el-step title="立项" description="">
             <template #description>
-              <span v-if="step.desc1">{{ step.desc1 }}<br/>{{ step.desc2 }}</span>
-              <span v-else>{{ step.description }}</span>
+              <span>中标日期: {{ detaileVo.winBiddingDate || '' }}</span>
+              <br>
+              <span>合同签订日期: {{ detaileVo.contractSignDate || '' }}</span>
+            </template>
+          </el-step>
+          <el-step title="项目验收" description="">
+            <template #description>
+              <span>验收日期: {{ detaileVo.checkDate || '' }}</span>
+            </template>
+          </el-step>
+          <el-step title="待付款" description="">
+            <template #description>
+              <span v-for="(item, index) in planList" :key="item">
+                第{{ index + 1 }}次付款计划：{{ item.paymentDate || '' }}<br>
+              </span>
+            </template>
+          </el-step>
+          <el-step title="项目完成" description="">
+            <template #description>
+              <span>合同终止日期: {{ detaileVo.completedTime ||'' }}<br/></span>
             </template>
           </el-step>
         </el-steps>
@@ -101,7 +116,7 @@
 
 <script lang='ts'>
 import { defineComponent, onMounted, ref, nextTick, reactive, toRefs } from 'vue'
-import { getDetails, updateDetails } from '@/api/details'
+import { getDetails, updateDetails, getProjectOverview } from '@/api/details'
 import { getProducts, getUserList } from '@/api/created'
 import router from '@/router'
 import { ElMessage } from 'element-plus'
@@ -112,10 +127,9 @@ import myUpLoad from '@/components/upload.vue'
 
 interface stepListType {
   title: string
-  description: string
+  description: any
   desc1?: string
   desc2?: string
-  id: string
 }
 interface fileType {
   uploadTime: string;
@@ -155,6 +169,8 @@ export default defineComponent({
       data.dialogTableVisible = true
       // fileList.value = detailObj.value.fileList
     }
+    const detaileVo = ref<any>({})
+    const planList = ref<any>([])
     // 调用接口获取详情数据
     const getData = (query: any) => {
       const params = Object.assign({}, query)
@@ -165,11 +181,16 @@ export default defineComponent({
         //   data.active = res.data[0].data.active
         // })
       })
-      const promise4 = getUserList()
-      const promise5 = getProducts()
-      Promise.all([promise4, promise5]).then((res) => {
+      const promise1 = getUserList()
+      const promise2 = getProducts()
+      const promise3 = getProjectOverview({ id: query.id })
+      Promise.all([promise1, promise2, promise3]).then((res) => {
         ownerList.value = res[0].data.data
         productList.value = res[1].data.data
+        detaileVo.value = res[2].data.data
+        console.log(res[2].data)
+        data.active = Number(res[2].data.data.status)
+        planList.value = detaileVo.value.prjContractsVOList[0]?.prjPaymentPlanVOList
       })
     }
     // 判断是否带参数
@@ -199,7 +220,7 @@ export default defineComponent({
       })
     }
     return {
-      ...resData, stepList, ownerList, productList, detailObj, isEdit, commitClick, fileList, fileListClick
+      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, fileList, fileListClick
     }
   }
 })

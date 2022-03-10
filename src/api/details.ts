@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 // 采购合同
-export function getContractsByStatus (data:{ inStatus: number, projectId:number }) {
+export function getContractsByStatus (data:{ projectId:number }) {
   return request({
     url: '/prjContracts/getContractsByStatus',
     method: 'post',
@@ -32,6 +32,14 @@ export function getDetails (params: { id: number}) {
 export function updateDetails (data: any) {
   return request({
     url: '/prjProjects/updateProjectsById',
+    method: 'post',
+    data
+  })
+}
+// 步骤条数据
+export function getProjectOverview (data: { id: number}) {
+  return request({
+    url: '/prjProjects/getProjectOverview?projectId=' + data.id,
     method: 'post',
     data
   })

@@ -40,11 +40,10 @@
       <el-table-column prop="projectName" label="项目名称" />
       <el-table-column prop="status" label="状态">
         <template #default="scope">
-          <el-tag v-if="scope.row.status===3" type="success" effect="dark">已完成</el-tag>
-          <el-tag v-else-if="scope.row.status===2" type="" effect="dark">进行中</el-tag>
-          <el-tag v-else-if="scope.row.status===1" type="danger" effect="dark">待付款</el-tag>
-          <el-tag v-else-if="scope.row.status===0" type="info" effect="dark">已废止</el-tag>
-          <span v-else></span>
+          <el-tag v-if="scope.row.status==3" type="success" effect="dark">已完成</el-tag>
+          <el-tag v-else-if="scope.row.status==2" type="" effect="dark">进行中</el-tag>
+          <el-tag v-else-if="scope.row.status==1" type="danger" effect="dark">待付款</el-tag>
+          <el-tag v-else type="info" effect="dark">已废止</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="项目创建日期" />

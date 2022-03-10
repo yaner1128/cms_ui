@@ -18,7 +18,7 @@ export function getSelectParent (data: { parentCode: number | string }) {
 export function getProducts () {
   return request({
     url: '/prjProducts/getProducts',
-    method: 'get'
+    method: 'post'
   })
 }
 // 责任人
@@ -29,9 +29,10 @@ export function getUserList () {
   })
 }
 // 新增
-export function insertBatchSomeColumn (data: string) {
+export function insertBatchSomeColumn (params: any) {
   return request({
-    url: '/prjProjects/insertBatchSomeColumn?' + data,
-    method: 'post'
+    url: '/prjProjects/insertBatchSomeColumn',
+    method: 'post',
+    params
   })
 }

@@ -11,12 +11,20 @@
     </div>
     <el-table :data="tableData" border row-key="path" default-expand-all>
       <el-table-column type="selection" />
-      <el-table-column fixed prop="name" label="标题" />
-      <el-table-column prop="path" label="路径" />
-      <el-table-column prop="meta.isShow" label="是否隐藏" />
-      <el-table-column prop="component.__file" label="模块" />
-      <el-table-column prop="redirect" label="重定向" />
-      <el-table-column prop="parentId" label="图标" />
+      <el-table-column fixed prop="name" label="名称" />
+      <el-table-column prop="parentId" label="图标" width="80px">
+        <template #default="scope">
+          <i class="iconfont" :class="'icon-'+scope.row.icon" style="font-size:25px"></i>
+        </template>
+      </el-table-column>
+      <el-table-column prop="parentId" label="排序" width="60px">
+        <template #default="scope">
+          <el-tag>{{ scope.parentId||1 }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="path" label="模块" />
+      <el-table-column prop="component.__file" label="组件路径" />
+      <el-table-column prop="createdDate" label="创建日期" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
           <el-button type="primary" size="small" @click="editClick(scope.row)">编辑</el-button>
@@ -28,7 +36,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-dialog v-model="dialogFormVisible" :title="curTitle" width="740px">
+    <el-dialog v-model="dialogFormVisible" :title="curTitle" width="580px">
       <el-form ref="refForm" :model="form" label-width="80px" :rules="rules">
         <el-form-item label="父级菜单" prop="parentId">
           <el-select v-model="form.parentId" placeholder="请选择父级菜单">
@@ -36,38 +44,34 @@
             <el-option label="Zone No.2" value="beijing"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="标题" prop="title">
-          <el-input v-model="form.title"></el-input>
-        </el-form-item>
-        <el-form-item label="路径" prop="path">
-          <el-input v-model="form.path"></el-input>
-        </el-form-item>
-        <el-form-item label="是否隐藏" prop="isShow">
-          <el-switch v-model="form.isShow" />
-        </el-form-item>
-        <el-form-item label="模块" prop="module">
-          <el-input v-model="form.module"></el-input>
-        </el-form-item>
-        <el-form-item label="重定向">
-          <el-input v-model="form.redirect"></el-input>
-        </el-form-item>
         <el-form-item label="图标">
-          <el-dropdown trigger="click">
-            <div class="iocnBox" v-if="form.name">
-              <i class="iconfont" :class="form.name" ></i>
-              <i class="iconfont icon-2901cuowu delete" @click.self="deleteIcon"></i>
-            </div>
-            <div class="iocnBox" v-else>
-              <i class="iconfont icon-2801zengjia2"></i>
+          <el-dropdown trigger="hover">
+            <div class="iconBox">
+              <el-input v-model="form.icon" clearable></el-input>
+              <span>
+                <i class="iconfont" :class="'icon-'+form.icon"></i>
+              </span>
             </div>
             <template #dropdown>
               <el-dropdown-menu class="iconList">
-                <li v-for="icon in iconList" :key="icon" @click="selectIcon(icon)">
-                  <i class="iconfont" :class="icon"></i>
+                <li v-for="icon in iconList" :key="icon.icon_id" @click="selectIcon(icon.font_class)">
+                  <i class="iconfont" :class="'icon-'+icon.font_class"></i>
                 </li>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
+        </el-form-item>
+        <el-form-item label="菜单名称" prop="title">
+          <el-input v-model="form.title" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="菜单排序">
+          <el-input-number v-model="form.title" controls-position="right" :min="1"></el-input-number>
+        </el-form-item>
+        <el-form-item label="模块" prop="path">
+          <el-input v-model="form.path" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="组件路径" prop="path">
+          <el-input v-model="form.path" clearable></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -83,6 +87,7 @@
 <script lang='ts'>
 import router from '@/router'
 import { defineComponent, ref, reactive, toRefs, onUnmounted } from 'vue'
+import iconList from './module/iconData'
 
 const rules = reactive({
   parentId: [
@@ -105,9 +110,8 @@ export default defineComponent({
   name: 'depart',
   components: {},
   setup () {
-    const iconList = ['icon-gongzuoguanli-huiyiguanli', 'icon-gongzuoguanli-hetongguanli', 'icon-gongzuoguanli-gongzuoqingdan', 'icon-gongzuoguanli-gongzuobaogao']
     const selectIcon = (icon: string) => {
-      form.value.name = icon
+      form.value.icon = icon
     }
     const deleteIcon = () => {
       form.value.name = ''
@@ -175,9 +179,6 @@ export default defineComponent({
         }
       })
     }
-    onUnmounted(() => {
-      console.log(88888)
-    })
 
     return {
       refForm, rules, iconList, selectIcon, deleteIcon, ...resData, form, add, tableData, onSubmit, editClick, deleteClick, cancelClick, commitClick
@@ -186,7 +187,7 @@ export default defineComponent({
 })
 </script>
 <style lang="scss" scoped>
-/deep/ .el-input{
+/deep/ .el-input,.el-input-number {
   width: 260px;
 }
 .handleClickBox{
@@ -202,14 +203,22 @@ export default defineComponent({
     }
   }
 }
-.el-form{
-  display: flex;
-  flex-wrap: wrap;
-}
 .el-pagination{
   text-align: center;
   padding-top: 30px;
   margin: 0 auto;
+}
+.iconBox{
+  position: relative;
+  span{
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translate(0,-50%);
+  }
+  /deep/ .el-input__inner{
+    padding-left: 30px;
+  }
 }
 .iconList{
   display: flex;
@@ -217,15 +226,15 @@ export default defineComponent({
   width: 260px;
   padding: 0;
   li{
-    width: 42px;
-    height: 42px;
-    margin: 5px;
+    width: 31px;
+    height: 31px;
+    margin: 5px 3px;
     box-sizing: border-box;
     border: 1px solid #e0e0e0;
     position: relative;
   }
   .iconfont{
-    font-size: 32px;
+    font-size: 20px;
     position: absolute;
     top: 50%;
     left: 50%;

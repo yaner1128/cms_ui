@@ -2,30 +2,26 @@
   <div class='userBox'>
     <el-form :inline="true" :model="formInline" class="demo-form-inline">
       <el-form-item>
-        <el-input v-model="formInline.name" placeholder="请输入姓名"></el-input>
+        <el-input v-model="formInline.employeeName" placeholder="请输入姓名"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="onSubmit">搜索</el-button>
+        <el-button type="primary" @click="getData">搜索</el-button>
         <el-button type="success" @click="resetClick">重置</el-button>
-        <el-button type="primary" @click="addUser">新增用户</el-button>
+        <el-button type="warning" @click="addUser">新增用户</el-button>
       </el-form-item>
     </el-form>
     <el-table v-loading="loading" :data="tableData" border>
       <el-table-column fixed prop="employeeName" label="姓名" width="120" />
-      <el-table-column prop="gender" label="性别">
-        <template #default="scope">
-          <span>{{ scope.row.gender == '1' ? '男' : '女'}}</span>
-        </template>
-      </el-table-column>
+      <el-table-column prop="gender" label="性别" />
       <el-table-column prop="age" label="年龄" />
       <el-table-column prop="employeeDate" label="入职时间" />
-      <el-table-column prop="depName" label="所属部门" />
-      <el-table-column prop="job" label="职位" width="350" />
+      <el-table-column prop="basDepartmentsVOList[0].depName" label="所属部门" />
+      <el-table-column prop="positionsVOList[0].positionName" label="职位" width="350" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
           <el-button type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
           <el-button type="text" size="small" @click="handleAddRole(scope.row)">添加角色</el-button>
-          <el-popconfirm title="确认删除本条数据吗？">
+          <el-popconfirm title="确认删除本条数据吗？"  @confirm="deleteUser(scope.row.employeeId)">
             <template #reference>
               <el-button type="text" size="small">删除</el-button>
             </template>
@@ -45,38 +41,32 @@
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
     />
+    <!-- 新增/编辑弹出框 -->
     <el-dialog v-model="userDialog" :title="createdUserTitle" width="500px">
       <el-form :model="userForm" :rules="rules" label-width="80px">
-        <el-form-item label="用户名称" prop="employeeName">
-          <el-input v-model="userForm.employeeName"></el-input>
+        <el-form-item label="用户姓名" prop="employeeName">
+          <el-input v-model="userForm.employeeName" clearable></el-input>
         </el-form-item>
         <el-form-item label="性别" prop="gender">
-          <el-select v-model="userForm.gender" placeholder="请选择性别">
-            <el-option label="男" :value='1'></el-option>
-            <el-option label="女" :value='0'></el-option>
+          <el-select v-model="userForm.gender" placeholder="请选择性别" clearable>
+            <el-option label="男" value='男'></el-option>
+            <el-option label="女" value='女'></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="年龄" prop="age">
-          <el-input v-model="userForm.age"></el-input>
+          <el-input v-model="userForm.age" clearable></el-input>
         </el-form-item>
         <el-form-item label="入职时间" prop="employeeDate">
-          <el-date-picker v-model="userForm.employeeDate" type="date" @change="changeClick" placeholder="请选择入职时间"></el-date-picker>
+          <el-date-picker v-model="userForm.employeeDate" type="date" @change="changeClick" placeholder="请选择入职时间" clearable></el-date-picker>
         </el-form-item>
         <el-form-item label="所属部门" prop="depName">
-          <el-select v-model="userForm.depName" placeholder="请选择部门">
-            <el-option label="总经办" value="总经办"></el-option>
-            <el-option label="行政部" value="行政部"></el-option>
-            <el-option label="业务部" value="业务部"></el-option>
-            <el-option label="研发部" value="研发部"></el-option>
+          <el-select v-model="userForm.depId" placeholder="请选择部门" clearable @change="changeDepart($event)">
+            <el-option v-for="item in allDepartment" :key="item" :label="item.depName" :value="item.depId"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="职位" prop="job">
-          <!-- <el-input v-model="userForm.job"></el-input> -->
-          <el-select v-model="userForm.job" placeholder="请选择部门">
-            <el-option label="总经理" value="总经理"></el-option>
-            <el-option label="副总经理" value="副总经理"></el-option>
-            <el-option label="总经理助理" value="总经理助理"></el-option>
-            <el-option label="行政" value="行政"></el-option>
+        <el-form-item label="职位" prop="positionLevel">
+          <el-select v-model="userForm.positionId" placeholder="请选择职位" clearable :disabled="!userForm.depId">
+            <el-option v-for="item in allJobData" :key="item" :label="item.positionName" :value="item.positionId"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
@@ -94,9 +84,9 @@
           <el-table-column property="name" label="角色"></el-table-column>
           <el-table-column fixed="right" label="操作">
             <template #default="scope">
-              <el-popconfirm title="确认删除本条数据吗？">
+              <el-popconfirm title="确认删除本条数据吗？" @confirm="deleteClick(scope.row)">
                 <template #reference>
-                  <el-button type="danger" size="small" @click="deleteClick(scope.row)">删除</el-button>
+                  <el-button type="danger" size="small">删除</el-button>
                 </template>
               </el-popconfirm>
             </template>
@@ -123,29 +113,30 @@
 
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
-import { getUserList, getRoleList, getAllRoleList } from '@/api/userList'
+import { userInformationQuery, addUserInformation, updataUserInfo, deleteUserInformation, queryAllDepartmentNames, getJobByDepartId, getRoleList, getAllRoleList } from '@/api/userList'
 import { page } from '@/utils/page'
 import { format } from '@/utils/dateFormat'
+import { ElMessage } from 'element-plus'
 
 const rules = reactive({
-  job: [
-    { required: true, message: '请选择职位', trigger: 'change' }
-  ],
   employeeName: [
     { required: true, message: '请输入姓名', trigger: 'blur' }
   ],
   gender: [
     { required: true, message: '请选择性别', trigger: 'change' }
-  ],
-  employeeDate: [
-    { required: true, message: '请选择入职时间', trigger: 'change' }
-  ],
-  depName: [
-    { required: true, message: '请选择所属部门', trigger: 'change' }
   ]
+  // employeeDate: [
+  //   { required: true, message: '请选择入职时间', trigger: 'change' }
+  // ]
+  // positionLevel: [
+  //   { required: true, message: '请选择职位', trigger: 'change' }
+  // ],
+  // depName: [
+  //   { required: true, message: '请选择所属部门', trigger: 'change' }
+  // ]
 })
 interface userDataType {
-  job: string;
+  positionLevel: string;
   employeeName: string;
   gender: string;
   age: string;
@@ -165,14 +156,9 @@ export default defineComponent({
   name: 'User',
   components: {},
   setup () {
-    const { pageData, handleSizeChange, handleCurrentChange } = page()
-    // 获取所有角色
-    const roleList = ref<roleListType[]>([])
-    getAllRoleList({}).then(res => {
-      roleList.value = res.data[0].data.data
-    })
+    const { pageData } = page()
     // 表单
-    const formInline = ref({ name: '' })
+    const formInline = ref<{employeeName: string}>({ employeeName: '' })
     // 查询用户数据
     const data = reactive({
       loading: false, // 表格加载
@@ -182,53 +168,109 @@ export default defineComponent({
       innerVisible: false,
       createdRole: '', // 当前选中的角色
       resetClick: () => { // 重置
-        formInline.value.name = ''
+        formInline.value.employeeName = ''
+        getData()
+      },
+      changeDepart: (val: any) => { // 部门列表改变事件
+        userForm.value.positionId = ''
+        getJobByDepartId(Number(val)).then(res => {
+          allJobData.value = res.data.data
+        })
+      },
+      changeClick: (val: any) => { // 日期改变事件
+        userForm.value.employeeDate = format(new Date(val), 'yyyy-MM-dd')
+      },
+      addUser: () => { // 新增点击
+        data.createdUserTitle = '新增'
+        data.userDialog = true
+        userForm.value = { employeeId: '', employeeName: '', gender: '', age: '', depId: '', positionId: '', employeeDate: '' }
+      },
+      editClick: (row: any) => { // 编辑
+        for (var k in userForm.value) {
+          userForm.value[k] = row[k]
+        }
+        userForm.value.depId = row.basDepartmentsVOList[0]?.depId
+        if (userForm.value.depId) {
+          data.changeDepart(userForm.value.depId)
+        }
+        userForm.value.positionId = row.positionsVOList[0]?.positionId
+        data.createdUserTitle = '编辑'
+        data.userDialog = true
+      },
+      deleteUser: (employeeId: number) => { // 删除用户
+        deleteUserInformation(employeeId).then(res => {
+          getData()
+        })
+      },
+      handleCurrentChange: (val: number) => {
+        pageData.currentPage.value = val
+        getData()
+      },
+      handleSizeChange: (val: number) => {
+        pageData.pageSize.value = val
+        pageData.currentPage.value = 1
+        getData()
       }
     })
     const resData = toRefs(data)
     // 表格数据
     const tableData = ref<userDataType[]>([])
+    // 部门下拉列表数据
+    const allDepartment = ref<any[]>([])
+    const getDepart = (() => {
+      queryAllDepartmentNames().then(res => {
+        allDepartment.value = res.data.data
+      })
+    })()
+    // 职位下拉列表数据
+    const allJobData = ref<any[]>([])
+    // 点击查询
     const getData = () => {
       data.loading = true
-      getUserList({ currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }).then(res => {
-        console.log('*****', res)
-        tableData.value = res.data[0].data.data
+      const page = { currentPageIndex: pageData.currentPage.value, pageSize: pageData.pageSize.value }
+      const params = Object.assign({ employeeName: formInline.value.employeeName }, page)
+      userInformationQuery(params).then(res => {
         data.loading = false
+        tableData.value = res.data.data.records
+        pageData.total.value = res.data.data.total
       })
     }
     getData()
-    // 查询
-    const onSubmit = () => {
-      console.log(formInline.value)
-      getData()
-    }
-    // 新增用户
-    const userForm = ref<userDataType>({ job: '', employeeName: '', gender: '', age: '', employeeDate: '', depName: '' })
-    const changeClick = (val: any) => {
-      userForm.value.employeeDate = format(new Date(val), 'yyyy-MM-dd')
-    }
-    // 点击新增
-    const addUser = () => {
-      data.createdUserTitle = '新增'
-      data.userDialog = true
-      userForm.value = { job: '', employeeName: '', gender: '', age: '', employeeDate: '', depName: '' }
-    }
-    // 确认新增提交
+
+    // 用户表单
+    const userForm = ref<any>({ employeeId: '', employeeName: '', gender: '', age: '', depId: '', positionId: '', employeeDate: '' })
+    // 新增/编辑 提交
     const handleAddUser = () => {
-      console.log('************', userForm.value)
       data.userDialog = false
       if (data.createdUserTitle === '新增') {
-        console.log('新增提交')
+        // var params1 = Object.assign({ createTime: format(new Date(), 'yyyy-MM-dd') }, userForm.value)
+        var params1 = Object.assign({}, userForm.value)
+        addUserInformation(params1).then((res) => {
+          ElMessage.success('新增用户成功')
+          getData()
+        })
       } else {
-        console.log('编辑提交')
+        var params = Object.assign({}, userForm.value)
+        for (var k in params) {
+          if (!params[k] || k === 'depId') {
+            delete params[k]
+          }
+        }
+        updataUserInfo(params).then((res:any) => {
+          if (res.data.code === 200) {
+            ElMessage.success('编辑用户信息成功')
+            getData()
+          } else {
+            ElMessage.success(res.data.data)
+          }
+        })
       }
     }
-    // 编辑
-    const editClick = (row: userDataType) => {
-      userForm.value = row
-      data.createdUserTitle = '编辑'
-      data.userDialog = true
-    }
+    // 获取所有角色
+    const roleList = ref<roleListType[]>([])
+    getAllRoleList({}).then(res => {
+      roleList.value = res.data[0].data.data
+    })
     // 新增角色
     const curRoleData = ref<roleListType[]>([])
     const handleAddRole = (row: userDataType) => {
@@ -252,7 +294,6 @@ export default defineComponent({
         createDate: format(new Date(), 'yyyy-MM-dd')
       })
       data.createdRole = ''
-      console.log('提交新增的角色', curRoleData.value)
     }
     // 删除
     const deleteClick = (row: userDataType) => {
@@ -260,7 +301,7 @@ export default defineComponent({
     }
 
     return {
-      rules, ...resData, formInline, onSubmit, tableData, addUser, userForm, changeClick, editClick, handleAddUser, handleAddRole, curRoleData, roleList, selectRole, deleteClick, addRoleClick, ...pageData, handleSizeChange, handleCurrentChange
+      rules, ...resData, formInline, tableData, getData, userForm, handleAddUser, handleAddRole, curRoleData, roleList, selectRole, deleteClick, addRoleClick, ...pageData, allDepartment, allJobData
     }
   }
 })

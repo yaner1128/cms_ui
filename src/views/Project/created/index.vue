@@ -75,9 +75,9 @@
               drag
               accept="image/*,.pdf"
               action=""
+              :before-upload="beforeUpload"
               :http-request="imggreySuccess"
               :on-exceed="fileExceed"
-              :on-success="uploadSuccess"
               :on-error="uploadError"
               :auto-upload="false"
             >
@@ -163,10 +163,10 @@ export default defineComponent({
         }
       },
       changeRegion: (val: any) => { // 获取省份列表
+        form.value.cityCode = ''
         data.getParent({ parentCode: val })
       },
       getParent: (query: { parentCode: string|number }) => {
-        console.log('///////', query)
         getSelectParent(query).then(res => {
           parentList.value = res.data.data
         })
@@ -188,9 +188,6 @@ export default defineComponent({
         productList.value = res[1].data.data
         areaList.value = res[2].data.data
       })
-      productList.value = [{
-        productName: '1111', productId: 11
-      }]
     }
     getData()
     // 校验表单
@@ -199,24 +196,17 @@ export default defineComponent({
       refForm.value.validate((valid:boolean) => {
         if (valid) {
           fileList.value = []
-          console.log(fileList.value)
+          console.log('***fileList****', fileList.value)
           submitUpload()
           // 校验成功 创建
           const params = Object.assign({
             createTime: format(new Date(), 'yyyy-MM-dd'),
             // createUser: JSON.parse(getUserInfo()).username
             createUser: 1,
-            fileList: fileList.value.length > 0 ? fileList.value : null
+            file: fileList.value.length > 0 ? fileList.value[0] : null
           }, form.value)
-          let queryData = ''
-          for (var k in params) {
-            if (params[k] || params[k] === 0) {
-              queryData += `${k}=${params[k]}&`
-            }
-          }
-          console.log('上传参数：', params)
-          insertBatchSomeColumn(queryData.slice(0, -1)).then(res => {
-            console.log('***res.data***', res.data)
+          console.log('params', params)
+          insertBatchSomeColumn(params).then(res => {
             ElMessage({
               message: '新增成功, 跳转项目列表',
               type: 'success'
@@ -236,26 +226,25 @@ export default defineComponent({
       ElMessage.warning('文件超出限制')
     }
     const filePreview = (file: unknown) => {
-      console.log(file)
+      console.log('/*****', file)
     }
     const uploadRef = ref<InstanceType<typeof ElUpload>>()
     // 附件提交
     const submitUpload = () => {
       uploadRef.value!.submit()
     }
-    const imggreySuccess = (file: any) => {
+    const beforeUpload = (file:any) => {
       fileList.value.push(file)
-      console.log('fileList', fileList.value)
     }
-    const uploadSuccess = (response: any, file:unknown, fileList: unknown) => {
-      console.log(response, file)
+    const imggreySuccess = (file: any) => {
+      console.log(file)
     }
     const uploadError = (error: unknown) => {
       console.log(error)
       ElMessage.warning('导入失败!')
     }
     return {
-      ...resData, areaList, parentList, ownerList, productList, form, rules, refForm, onSubmit, reset, uploadRef, fileExceed, filePreview, submitUpload, uploadSuccess, uploadError, imggreySuccess, fileList
+      ...resData, areaList, parentList, ownerList, productList, form, rules, refForm, onSubmit, reset, uploadRef, fileExceed, filePreview, submitUpload, uploadError, imggreySuccess, fileList, beforeUpload
     }
   }
 })

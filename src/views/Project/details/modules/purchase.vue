@@ -115,7 +115,7 @@ export default defineComponent({
     // 采购合同数据
     const purchaseData = ref<purchaseDataType[]>([])
     const getData = (query: { id: number }) => {
-      getContractsByStatus({ inStatus: 0, projectId: query.id }).then(res => {
+      getContractsByStatus({ projectId: query.id }).then(res => {
         purchaseData.value = res.data.records
         purchaseData.value = [{
           amount: '12000',

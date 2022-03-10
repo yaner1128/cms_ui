@@ -4,6 +4,6 @@ export function getProjectList (data: any, pageData: {currentPage: number, pageS
   return request({
     url: `/prjProjects/getProjectsLists?currentPageIndex=${pageData.currentPage}&pageSize=${pageData.pageSize}`,
     method: 'post',
-    data: data
+    data
   })
 }
