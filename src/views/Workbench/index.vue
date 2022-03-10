@@ -92,7 +92,7 @@ export default defineComponent({
     const tableData = ref<typeWorkbench[]>([])
     const getData = () => {
       data.loading = true
-      const queryData = { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }
+      const queryData = { currentPageIndex: pageData.currentPage.value, pageSize: pageData.pageSize.value }
       getProjectUndoneList(queryData).then(res => {
         tableData.value = res.data.data.records
         pageData.total.value = res.data.data.total

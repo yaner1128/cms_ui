@@ -5,32 +5,37 @@
         <el-button type="primary" @click="add">+ 添加</el-button>
       </div>
       <div class="formBox">
-        <el-input v-model="selectName" placeholder="请输入名称"></el-input>
+        <el-input v-model="selectName" placeholder="请输入名称" clearable></el-input>
         <el-button type="primary" @click="onSubmit">查询</el-button>
       </div>
     </div>
-    <el-table :data="tableData" border row-key="path" default-expand-all>
+    <el-table
+      :data="tableData" border
+      row-key="permissionId"
+      default-expand-all
+      :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+    >
       <el-table-column type="selection" />
-      <el-table-column fixed prop="name" label="名称" />
-      <el-table-column prop="parentId" label="图标" width="80px">
+      <el-table-column fixed prop="permissionName" label="名称" />
+      <el-table-column prop="permissionIcon" label="图标" width="80px">
         <template #default="scope">
-          <i class="iconfont" :class="'icon-'+scope.row.icon" style="font-size:25px"></i>
+          <i class="iconfont" :class="'icon-'+scope.row.permissionIcon" style="font-size:25px"></i>
         </template>
       </el-table-column>
-      <el-table-column prop="parentId" label="排序" width="60px">
+      <el-table-column prop="permissionId" label="排序" width="60px">
         <template #default="scope">
           <el-tag>{{ scope.parentId||1 }}</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="path" label="模块" />
-      <el-table-column prop="component.__file" label="组件路径" />
+      <el-table-column prop="permissionUrl" label="组件路径" />
       <el-table-column prop="createdDate" label="创建日期" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
-          <el-button type="primary" size="small" @click="editClick(scope.row)">编辑</el-button>
-          <el-popconfirm title="确认删除本条数据吗?">
+          <el-button type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
+          <el-popconfirm title="确认删除本条数据吗？"  @confirm="deleteClick(scope.row.permissionId)">
             <template #reference>
-              <el-button type="danger" size="small" @click="deleteClick(scope.row)">删除</el-button>
+              <el-button type="text" size="small">删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -39,17 +44,17 @@
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="580px">
       <el-form ref="refForm" :model="form" label-width="80px" :rules="rules">
         <el-form-item label="父级菜单" prop="parentId">
-          <el-select v-model="form.parentId" placeholder="请选择父级菜单">
-            <el-option label="Zone No.1" value="shanghai"></el-option>
-            <el-option label="Zone No.2" value="beijing"></el-option>
+          <el-select v-model="form.parentId" placeholder="请选择父级菜单" aria-placeholder="请选择父级菜单">
+            <el-option label="无" :value="0"></el-option>
+            <el-option label="项目总览" :value="1"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="图标">
           <el-dropdown trigger="hover">
             <div class="iconBox">
-              <el-input v-model="form.icon" clearable></el-input>
+              <el-input v-model="form.permissionIcon" clearable></el-input>
               <span>
-                <i class="iconfont" :class="'icon-'+form.icon"></i>
+                <i class="iconfont" :class="'icon-'+form.permissionIcon"></i>
               </span>
             </div>
             <template #dropdown>
@@ -61,22 +66,22 @@
             </template>
           </el-dropdown>
         </el-form-item>
-        <el-form-item label="菜单名称" prop="title">
-          <el-input v-model="form.title" clearable></el-input>
+        <el-form-item label="菜单名称" prop="permissionName">
+          <el-input v-model="form.permissionName" clearable></el-input>
         </el-form-item>
         <el-form-item label="菜单排序">
-          <el-input-number v-model="form.title" controls-position="right" :min="1"></el-input-number>
+          <el-input-number controls-position="right" :min="1"></el-input-number>
         </el-form-item>
-        <el-form-item label="模块" prop="path">
-          <el-input v-model="form.path" clearable></el-input>
+        <el-form-item label="模块">
+          <el-input v-model="form.permissionName" clearable></el-input>
         </el-form-item>
-        <el-form-item label="组件路径" prop="path">
-          <el-input v-model="form.path" clearable></el-input>
+        <el-form-item label="组件路径" prop="permissionUrl">
+          <el-input v-model="form.permissionUrl" clearable></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="cancelClick">取消</el-button>
+          <el-button @click="dialogFormVisible = false">取消</el-button>
           <el-button type="primary" @click="commitClick">确认</el-button>
         </span>
       </template>
@@ -88,100 +93,114 @@
 import router from '@/router'
 import { defineComponent, ref, reactive, toRefs, onUnmounted } from 'vue'
 import iconList from './module/iconData'
+import { getAllMenuList, permissionAdd, permissionUpdate, permissionDelete } from '@/api/menu'
+import { format } from '@/utils/dateFormat'
+import { ElMessage } from 'element-plus'
 
 const rules = reactive({
   parentId: [
     { required: true, message: '请选择父级菜单', trigger: 'change' }
   ],
-  title: [
+  permissionName: [
     { required: true, message: '请输入标题', trigger: 'blur' }
   ],
-  path: [
+  permissionUrl: [
     { required: true, message: '请输入路径', trigger: 'blur' }
-  ],
-  isShow: [
-    { required: true, message: '请选择所售产品', trigger: 'change' }
-  ],
-  module: [
-    { required: true, message: '请输入模块名称', trigger: 'blur' }
   ]
+  // isShow: [
+  //   { required: true, message: '请选择所售产品', trigger: 'change' }
+  // ],
+  // module: [
+  //   { required: true, message: '请输入模块名称', trigger: 'blur' }
+  // ]
 })
+interface formType {
+  parentId: number|string;
+  permissionName: string;
+  permissionIcon: string;
+  permissionUrl: string;
+  createTime?: string;
+}
 export default defineComponent({
   name: 'depart',
   components: {},
   setup () {
-    const selectIcon = (icon: string) => {
-      form.value.icon = icon
-    }
-    const deleteIcon = () => {
-      form.value.name = ''
-    }
     const data = reactive({
       selectName: '',
       dialogFormVisible: false,
-      curTitle: '新增'
+      curTitle: '新增',
+      selectIcon: (icon: string) => {
+        form.value.permissionIcon = icon
+      },
+      add: () => { // 新增
+        data.dialogFormVisible = true
+        data.curTitle = '新增'
+        form.value = { parentId: 0, permissionName: '', permissionIcon: '', permissionUrl: '' }
+      },
+      editClick: (row: any) => { // 编辑
+        data.dialogFormVisible = true
+        data.curTitle = '编辑'
+        form.value = row
+      },
+      deleteClick: (permissionId: number) => { // 删除
+        console.log(permissionId)
+        permissionDelete(permissionId).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('删除成功！')
+            getData()
+          }
+        })
+      }
     })
     const resData = toRefs(data)
-    const form = ref<{ [propname: string]: any }>({
-      name: '',
-      path: '',
-      region: ''
+    const form = ref<formType>({
+      parentId: 0,
+      permissionName: '',
+      permissionIcon: '',
+      permissionUrl: ''
     })
-    // 新增
-    const add = (row: any) => {
-      data.dialogFormVisible = true
-      data.curTitle = '新增'
-      console.log(row)
-    }
     // 表格数据
     const tableData = ref<any[]>([])
-    const temp = router.options.routes.filter(item => {
-      item.children = item.children?.filter(child => {
-        return child.name
+    const getData = () => {
+      getAllMenuList(data.selectName).then(res => {
+        tableData.value = res.data.data
       })
-      return true
-    })
-    temp.forEach(item => {
-      if (!item.name && item.children) {
-        item = item.children[0]
-      }
-      tableData.value.push(item)
-    })
+    }
+    getData()
     // 查询
     const onSubmit = () => {
       console.log('查询', data.selectName)
-    }
-    // 编辑
-    const editClick = (row: any) => {
-      data.dialogFormVisible = true
-      data.curTitle = '编辑'
-      form.value = row
-      console.log(row)
-    }
-    // 删除
-    const deleteClick = (row: any) => {
-      console.log(row)
-    }
-    // 取消
-    const cancelClick = () => {
-      data.dialogFormVisible = false
-      form.value = { name: '', region: '', path: '' }
+      getData()
     }
     // 提交
     const refForm = ref()
     const commitClick = () => {
       refForm.value.validate((valid:boolean) => {
         if (valid) {
-          data.dialogFormVisible = false
-          // 提交
-          console.log(form.value)
-          form.value = { name: '', region: '', path: '' }
+          if (data.curTitle === '新增') {
+            // form.value.createTime = format(new Date(), 'yyyy-MM-dd')
+            permissionAdd(form.value).then(res => {
+              if (res.data.code === 200) {
+                ElMessage.success('新增菜单成功！')
+              }
+              getData()
+              data.dialogFormVisible = false
+            })
+          } else {
+            permissionUpdate(form.value).then(res => {
+              if (res.data.code === 200) {
+                ElMessage.success('编辑成功！')
+              }
+              getData()
+              data.dialogFormVisible = false
+            })
+          }
         }
       })
     }
 
     return {
-      refForm, rules, iconList, selectIcon, deleteIcon, ...resData, form, add, tableData, onSubmit, editClick, deleteClick, cancelClick, commitClick
+      refForm, rules, iconList, ...resData, form, tableData, onSubmit, commitClick
     }
   }
 })

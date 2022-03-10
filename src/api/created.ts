@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import qs from 'qs'
 
 // 行政区划级别
 export function getSelectArea () {
@@ -29,10 +30,10 @@ export function getUserList () {
   })
 }
 // 新增
-export function insertBatchSomeColumn (params: any) {
+export function insertBatchSomeColumn (data: any) {
   return request({
     url: '/prjProjects/insertBatchSomeColumn',
     method: 'post',
-    params
+    data: data
   })
 }

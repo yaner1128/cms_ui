@@ -21,9 +21,9 @@
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
           <el-button type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
-          <el-popconfirm title="确认删除本条数据吗?">
+          <el-popconfirm title="确认删除本条数据吗？"  @confirm="deleteClick(scope.row.depId)">
             <template #reference>
-              <el-button type="text" size="small" @click="deleteClick(scope.row)">删除</el-button>
+              <el-button type="text" size="small">删除</el-button>
             </template>
           </el-popconfirm>
         </template>
@@ -32,12 +32,12 @@
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="600px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="上级部门">
-          <el-select v-model="form.region" placeholder="请选择上级部门">
-            <el-option v-for="item in tableData" :key="item" :label="item.depName" :value="item.depId"></el-option>
+          <el-select v-model="form.parentId" placeholder="请选择上级部门" clearable @change="departChange($event)">
+            <el-option v-for="item in allDepartment" :key="item" :label="item.depName" :value="item.depId"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="名称">
-          <el-input v-model="form.depName" autocomplete="off"></el-input>
+          <el-input v-model="form.depName" autocomplete="off" clearable></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -52,7 +52,10 @@
 
 <script lang='ts'>
 import { defineComponent, ref, reactive, toRefs } from 'vue'
-import { getAllDepartmentsPage, addDepart } from '@/api/depart'
+import { getAllDepartmentsPage, addDepart, updateDepart, deleteDepart } from '@/api/depart'
+import { queryAllDepartmentNames } from '@/api/userList'
+import { format } from '@/utils/dateFormat'
+import { ElMessage } from 'element-plus'
 
 export default defineComponent({
   name: 'depart',
@@ -64,66 +67,94 @@ export default defineComponent({
       curTitle: '新增',
       onSubmit: () => { // 查询
         getData()
+      },
+      getAll: () => {
+        queryAllDepartmentNames().then(res => {
+          allDepartment.value = res.data.data
+        })
+      },
+      // 新增
+      add: () => {
+        data.getAll()
+        data.dialogFormVisible = true
+        data.curTitle = '新增'
+      },
+      // 编辑
+      editClick: (row: any) => {
+        console.log(row)
+        row.parentId = Number(row.parentId)
+        data.dialogFormVisible = true
+        data.curTitle = '编辑'
+        form.value = row
+      },
+      departChange: (val: any) => {
+        for (var i = 0; i < allDepartment.value.length; i++) {
+          if (allDepartment.value[i].depId === val) {
+            form.value.depLevel = allDepartment.value[i].depLevel + 1 || 0
+          }
+        }
       }
     })
-    const form = ref({
+    const form = ref<any>({
+      parentId: 0,
       depName: '',
-      region: ''
+      depLevel: 0
     })
     const resData = toRefs(data)
     // 表格数据
     const tableData = ref<any[]>([])
-    const allDepart = ref<any[]>([])
+    const allDepartment = ref<any[]>([])
     const getData = () => {
       const params = { depName: data.depName }
       getAllDepartmentsPage(params).then((res:any) => {
         console.log(res.data)
         tableData.value = res.data.data
-        function getDepart (arr: any) {
-          // eslint-disable-next-line no-debugger
-          debugger
-          if (arr.children) {
-            getDepart(arr.children)
-          } else {
-            allDepart.value.push()
-          }
-        }
-        getDepart(tableData.value)
       })
     }
     getData()
-    // 新增
-    const add = (row: any) => {
-      data.dialogFormVisible = true
-      data.curTitle = '新增'
-      console.log(row)
-      addDepart(row).then(res => {
-        console.log(res)
-      })
-    }
-    // 编辑
-    const editClick = (row: any) => {
-      data.dialogFormVisible = true
-      data.curTitle = '编辑'
+    data.getAll()
+    // 新增/编辑提交
+    const commitClick = () => {
+      data.dialogFormVisible = false
+      // 提交
+      if (data.curTitle === '新增') {
+        const params = Object.assign({
+          createTime: format(new Date(), 'yyyy-MM-dd')
+        }, form.value)
+        addDepart(params).then(res => {
+          console.log(res)
+          ElMessage.success('新增成功')
+          getData()
+        })
+      } else {
+        const params = Object.assign({
+          updateTime: format(new Date(), 'yyyy-MM-dd')
+        }, form.value)
+        console.log(params)
+        updateDepart(params).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('编辑成功')
+          }
+        })
+      }
     }
     // 删除
-    const deleteClick = (row: any) => {
-      console.log(row)
+    const deleteClick = (depId: number) => {
+      deleteDepart(depId).then(res => {
+        if (res.data.code === 200) {
+          ElMessage.success('删除成功')
+          getData()
+        }
+      })
     }
     // 取消
     const cancelClick = () => {
       data.dialogFormVisible = false
-      form.value = { depName: '', region: '' }
-    }
-    // 提交
-    const commitClick = () => {
-      data.dialogFormVisible = false
-      // 提交
-      form.value = { depName: '', region: '' }
+      form.value = { depName: '', parentId: 0, depLevel: 0 }
     }
 
     return {
-      ...resData, form, add, tableData, editClick, deleteClick, cancelClick, commitClick
+      ...resData, form, tableData, deleteClick, cancelClick, commitClick, allDepartment
     }
   }
 })

@@ -75,10 +75,8 @@
               drag
               accept="image/*,.pdf"
               action=""
-              :before-upload="beforeUpload"
-              :http-request="imggreySuccess"
-              :on-exceed="fileExceed"
-              :on-error="uploadError"
+              :on-change="handleFileChange"
+              :on-remove="handleRemove"
               :auto-upload="false"
             >
               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
@@ -106,6 +104,7 @@ import { getUserInfo } from '@/utils/token'
 import router from '@/router'
 import { ElMessage, ElUpload } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
+import axios from 'axios'
 
 const rules = reactive({
   projectName: [
@@ -114,11 +113,14 @@ const rules = reactive({
   projectType: [
     { required: true, message: '请选择项目类型', trigger: 'change' }
   ],
-  leaderId: [
-    { required: true, message: '请选择责任人', trigger: 'change' }
-  ],
   productId: [
     { required: true, message: '请选择所售产品', trigger: 'change' }
+  ],
+  isChecked: [
+    { required: true, message: '请选择', trigger: 'change' }
+  ],
+  leaderId: [
+    { required: true, message: '请选择责任人', trigger: 'change' }
   ]
 })
 
@@ -130,7 +132,7 @@ interface fromType {
   projectName: string;
   projectType: string|number;
   leaderId: string|number;
-  [propname: string]: unknown;
+  [propname: string]: any;
 }
 interface regionType{
   areaCode: string;
@@ -143,7 +145,7 @@ export default defineComponent({
   components: { UploadFilled },
   setup () {
     // 附件
-    const fileList = ref<any[]>([])
+    const fileData = ref<any[]>([])
     // 区域
     const areaList = ref<regionType[]>([])
     const parentList = ref<regionType[]>([])
@@ -176,7 +178,7 @@ export default defineComponent({
       }
     })
     const resData = toRefs(data)
-    const form = ref<fromType>({ projectName: '', projectType: '', leaderId: '', isBidding: 0, productId: '', saleCount: 0, purchaseCount: 0, saleAmount: 0, purchaseAmount: 0, provinceCode: '', cityCode: '' })
+    const form = ref<fromType>({ projectName: '', projectType: '', leaderId: '', isBidding: 0, productId: '', saleCount: 0, purchaseCount: 0, saleAmount: '', purchaseAmount: '', provinceCode: '', cityCode: '' })
 
     // 获取选择框下拉数据
     const getData = () => {
@@ -193,20 +195,17 @@ export default defineComponent({
     // 校验表单
     const refForm = ref()
     const onSubmit = () => {
+      console.log('fileData.value', fileData.value)
       refForm.value.validate((valid:boolean) => {
         if (valid) {
-          fileList.value = []
-          console.log('***fileList****', fileList.value)
-          submitUpload()
-          // 校验成功 创建
-          const params = Object.assign({
-            createTime: format(new Date(), 'yyyy-MM-dd'),
-            // createUser: JSON.parse(getUserInfo()).username
-            createUser: 1,
-            file: fileList.value.length > 0 ? fileList.value[0] : null
-          }, form.value)
-          console.log('params', params)
-          insertBatchSomeColumn(params).then(res => {
+          const fd = new FormData()
+          if (fileData.value.length > 0) {
+            fd.append('file', fileData.value[0].raw)
+          }
+          for (var k in form.value) {
+            fd.append(k, form.value[k])
+          }
+          insertBatchSomeColumn(fd).then(() => {
             ElMessage({
               message: '新增成功, 跳转项目列表',
               type: 'success'
@@ -222,29 +221,26 @@ export default defineComponent({
     const reset = () => {
       form.value = { projectName: '', projectType: '', leaderId: '', isBidding: 0, productId: '', saleCount: 0, purchaseCount: 0, saleAmount: 0, purchaseAmount: 0, provinceCode: '', cityCode: '' }
     }
-    const fileExceed = () => {
-      ElMessage.warning('文件超出限制')
+    const handleFileChange = (file: any, fileList: any) => {
+      fileData.value = fileList
     }
-    const filePreview = (file: unknown) => {
-      console.log('/*****', file)
+    const handleRemove = (file: any, fileList: any) => {
+      fileData.value = fileList
     }
-    const uploadRef = ref<InstanceType<typeof ElUpload>>()
-    // 附件提交
-    const submitUpload = () => {
-      uploadRef.value!.submit()
-    }
-    const beforeUpload = (file:any) => {
-      fileList.value.push(file)
-    }
-    const imggreySuccess = (file: any) => {
-      console.log(file)
-    }
-    const uploadError = (error: unknown) => {
-      console.log(error)
-      ElMessage.warning('导入失败!')
-    }
+    // const uploadRef = ref<InstanceType<typeof ElUpload>>()
+    // // 附件提交
+    // const submitUpload = () => {
+    //   uploadRef.value!.submit()
+    // }
+    // const imggreySuccess = (file: any) => {
+    //   console.log(file)
+    // }
+    // const uploadError = (error: unknown) => {
+    //   console.log(error)
+    //   ElMessage.warning('导入失败!')
+    // }
     return {
-      ...resData, areaList, parentList, ownerList, productList, form, rules, refForm, onSubmit, reset, uploadRef, fileExceed, filePreview, submitUpload, uploadError, imggreySuccess, fileList, beforeUpload
+      ...resData, areaList, parentList, ownerList, productList, form, rules, refForm, onSubmit, reset, handleFileChange, handleRemove
     }
   }
 })

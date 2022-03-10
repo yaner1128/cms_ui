@@ -15,3 +15,18 @@ export function addDepart (data: any) {
     data
   })
 }
+// 修改
+export function updateDepart (data: any) {
+  return request({
+    url: '/departments/update',
+    method: 'post',
+    data
+  })
+}
+// 删除
+export function deleteDepart (depId: number) {
+  return request({
+    url: '/departments/delete?depId=' + depId,
+    method: 'post'
+  })
+}

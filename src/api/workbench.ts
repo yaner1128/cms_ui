@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 // 工作台列表
-export function getProjectUndoneList (params: { currentPage: number, pageSize: number}) {
+export function getProjectUndoneList (params: { currentPageIndex: number, pageSize: number}) {
   return request({
     url: '/prjProjects/getProjectUndoneList',
     method: 'post',

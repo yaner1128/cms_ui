@@ -37,12 +37,10 @@
           </li>
           <li>
             <span>立项日期</span>：
-            <!-- <el-input v-model="detailObj.contractSignDate" :disabled="!isEdit"></el-input> -->
-            <el-date-picker v-model="detailObj.contractSignDate" type="date" placeholder="请选择招标日期" :disabled="!isEdit"></el-date-picker>
+            <el-date-picker v-model="detailObj.contractSignDate" type="date" placeholder="请选择招标日期" :disabled="!isEdit" @change="dateChange($event,'contractSignDate')"></el-date-picker>
           </li>
           <li>
             <span>项目类型</span>：
-            <!-- <el-input v-model="detailObj.projectType" :disabled="!isEdit"></el-input> -->
             <el-select v-model="detailObj.projectType" placeholder="请选择项目类型" :disabled="!isEdit">
               <el-option label="自营软件项目" :value="0"></el-option>
               <el-option label="采购代理软件" :value="1"></el-option>
@@ -50,21 +48,20 @@
           </li>
           <li>
             <span>责任人</span>：
-            <!-- <el-input v-model="detailObj.employeeName" :disabled="!isEdit"></el-input> -->
             <el-select v-model="detailObj.leaderId" placeholder="请选择责任人" :disabled="!isEdit">
               <el-option v-for="(item,index) in ownerList" :key="index" :label="item.employeeName" :value="item.employeeId"></el-option>
             </el-select>
           </li>
           <li>
             <span>是否招投标项目</span>：
-            <!-- <el-input v-model="detailObj.isBidding" :disabled="!isEdit"></el-input> -->
             <el-select v-model="detailObj.isBidding" placeholder="请选择项目类型" :disabled="!isEdit">
               <el-option label="是" value="1"></el-option>
               <el-option label="否" value="0"></el-option>
             </el-select>
           </li>
           <li>
-            <span>中标日期</span>：<el-input v-model="detailObj.winBiddingDate" :disabled="!isEdit"></el-input>
+            <span>中标日期</span>：
+            <el-date-picker v-model="detailObj.winBiddingDate" type="date" placeholder="请选择中标日期" :disabled="!isEdit" @change="dateChange($event,'winBiddingDate')"></el-date-picker>
           </li>
           <li>
             <span>采购金额</span>：<el-input v-model="detailObj.purchaseAmount" :disabled="!isEdit"></el-input>
@@ -86,8 +83,14 @@
             </el-select>
           </li>
           <li>
+            <span>验收日期</span>：
+            <el-date-picker v-model="detailObj.checkDate" type="date" placeholder="请选择验收日期" :disabled="!isEdit" @change="dateChange($event,'checkDate')"></el-date-picker>
+          </li>
+          <li style="width: 100%">
             <span>项目附件</span>：
-            <el-button type="text" @click="fileListClick">附件</el-button>
+            <ul>
+              <a href="#">附件标题--</a><el-button v-show="isEdit" type="text" @click="commitClick">编辑</el-button>
+            </ul>
           </li>
         </ul>
         <div class="buttonList">
@@ -124,6 +127,7 @@ import myPurchase from './modules/purchase.vue'
 import mySales from './modules/sales.vue'
 import myPaymentPlan from './modules/paymentPlan.vue'
 import myUpLoad from '@/components/upload.vue'
+import { format } from '@/utils/dateFormat'
 
 interface stepListType {
   title: string
@@ -145,6 +149,9 @@ export default defineComponent({
   components: { myPurchase, mySales, myPaymentPlan, myUpLoad },
   setup () {
     const data = reactive({
+      dateChange: (val: any, code: string) => {
+        detailObj.value[code] = format(new Date(val), 'yyyy-MM-dd')
+      },
       dialogTableVisible: false,
       projectId: 0,
       active: 0 // 步骤条进度
@@ -153,7 +160,7 @@ export default defineComponent({
     const ownerList = ref<{[propname:string]:any}[]>([])
     const productList = ref<{productName: string, productId: number}[]>([])
     // 当前项目详细数据
-    const detailObj = ref({ projectName: '', contractSignDate: '', projectType: '', leaderId: '', isBidding: '', winBiddingDate: '', purchaseAmount: '', saleAmount: '', productId: '', isChecked: '' })
+    const detailObj = ref<{ [propname: string]: any }>({ projectName: '', contractSignDate: '', projectType: '', leaderId: '', isBidding: '', winBiddingDate: '', purchaseAmount: '', saleAmount: '', productId: '', isChecked: '' })
     // 步骤条数据
     const stepList = ref<stepListType[]>([])
     // 附件操作
@@ -176,10 +183,6 @@ export default defineComponent({
       const params = Object.assign({}, query)
       getDetails(params).then(res => {
         detailObj.value = res.data.data
-        // stepList.value = res.data[0].data.setupList
-        // nextTick(() => {
-        //   data.active = res.data[0].data.active
-        // })
       })
       const promise1 = getUserList()
       const promise2 = getProducts()
@@ -188,7 +191,6 @@ export default defineComponent({
         ownerList.value = res[0].data.data
         productList.value = res[1].data.data
         detaileVo.value = res[2].data.data
-        console.log(res[2].data)
         data.active = Number(res[2].data.data.status)
         planList.value = detaileVo.value.prjContractsVOList[0]?.prjPaymentPlanVOList
       })
@@ -268,8 +270,11 @@ export default defineComponent({
         height: 35px;
         width: 30%;
         font-size: 13px;
-        // font-weight: 600;
         padding: 5px 0;
+        a{
+          text-decoration: none;
+          line-height: 32px;
+        }
       }
     }
     .buttonList{

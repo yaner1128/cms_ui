@@ -36,7 +36,7 @@
     </el-form>
     <!-- 表格 -->
     <el-table v-loading="loading" :data="tableData" border style="width: 100%" height="740px">
-      <el-table-column prop="projectId" label="项目ID" />
+      <el-table-column prop="projectId" label="项目ID" sortable />
       <el-table-column prop="projectName" label="项目名称" />
       <el-table-column prop="status" label="状态">
         <template #default="scope">
@@ -147,7 +147,6 @@ export default defineComponent({
       data.loading = true
       const params = Object.assign({}, formInline.value)
       getProjectList(params, { currentPage: pageData.currentPage.value, pageSize: pageData.pageSize.value }).then(res => {
-        console.log(res.data)
         tableData.value = res.data.data.records
         pageData.total.value = res.data.data.total
         data.loading = false
