@@ -3,14 +3,16 @@
     <el-table :data="fileList" max-height="800" border>
       <el-table-column prop="uploadTime" label="上传日期" />
       <el-table-column prop="attachmentName" label="名称" />
+      <el-table-column prop="parentName" label="所属主表" />
       <el-table-column prop="projectName" label="所属项目" />
       <el-table-column prop="fileType" label="文件类型" />
       <el-table-column prop="attchmentType" label="附件类型" />
+      <el-table-column prop="attachUrl" label="地址" />
       <el-table-column label="操作">
         <template #default="scope">
-          <a class="link" href="http://www.gov.cn/zhengce/pdfFile/2022_PDF.pdf" target="_blank" style="margin-right: 12px">查看</a>
+          <a class="link" @click="exportClick(scope.row.attachUrl)" target="_blank" style="margin-right: 12px">查看</a>
           <el-button v-show="isEdit" type="text" size="small" @click="editClick(scope.row)">编辑</el-button>
-          <el-popconfirm title="确认删除本条数据吗？">
+          <el-popconfirm title="确认删除本条数据吗？" @confirm="deleteFile(scope.row.attachmentId)">
             <template #reference>
               <el-button v-show="isEdit" type="text" size="small">删除</el-button>
             </template>
@@ -49,7 +51,8 @@
 <script lang='ts'>
 import { defineComponent, reactive, toRefs } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
-import { ElMessage, ElUpload } from 'element-plus'
+import { ElMessage } from 'element-plus'
+import { removeEnclosure } from '@/api/attLibrary'
 
 interface rowType {
   uploadTime: string;
@@ -69,6 +72,18 @@ export default defineComponent({
       editClick: (row: rowType) => {
         data.uploadDialog = true
         console.log(row)
+      },
+      exportClick: (attachUrl: string) => {
+        const url = `/file/downloadFile?savePath=${attachUrl}`
+        const iframe = document.createElement('iframe')
+        iframe.src = url
+        iframe.style.display = 'none'
+        document.body.appendChild(iframe)
+      },
+      deleteFile: (id: number) => {
+        removeEnclosure(id).then((res: any) => {
+          console.log(res)
+        })
       }
     })
     const resData = toRefs(data)

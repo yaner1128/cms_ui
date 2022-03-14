@@ -17,7 +17,7 @@ export function getSalesContract (data:{ projectId: number }) {
 // 付款计划
 export function getSelectContractId (data:{ projectId: number }) {
   return request({
-    url: `/prjPaymentPlan/selectContractId?projectId=${data.projectId}`,
+    url: `/prjPaymentPlan/selectContractId?contractId=${data.projectId}`,
     method: 'post'
   })
 }

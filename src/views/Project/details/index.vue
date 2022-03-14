@@ -88,9 +88,25 @@
           </li>
           <li style="width: 100%">
             <span>项目附件</span>：
-            <ul>
-              <a href="#">附件标题--</a><el-button v-show="isEdit" type="text" @click="commitClick">编辑</el-button>
+            <!-- <span class="itemFile" @click="fileClick">附件</span> -->
+            <ul id="fileBox" v-if="detailObj.basAttachments">
+              <li v-for="item in detailObj.basAttachments" :key="item">
+                <span class="itemFile" @click="exportClick(item.attachUrl)">{{ item.attachmentName || '附件名称'}}</span>
+                <el-button v-show="isEdit" type="text">编辑</el-button>
+                <el-button v-show="isEdit" type="text" @click="deleteClick(item.attachmentId)">删除</el-button>
+              </li>
             </ul>
+            <el-upload class="upload-demo"
+              ref="uploadRef"
+              accept="image/*,.pdf"
+              :limit="1"
+              action=""
+              :on-change="handleFileChange"
+              :on-remove="handleRemove"
+              :auto-upload="false"
+              >
+              <el-button type="text">上传附件</el-button>
+            </el-upload>
           </li>
         </ul>
         <div class="buttonList">
@@ -128,6 +144,7 @@ import mySales from './modules/sales.vue'
 import myPaymentPlan from './modules/paymentPlan.vue'
 import myUpLoad from '@/components/upload.vue'
 import { format } from '@/utils/dateFormat'
+import { removeEnclosure } from '@/api/attLibrary'
 
 interface stepListType {
   title: string
@@ -149,6 +166,25 @@ export default defineComponent({
   components: { myPurchase, mySales, myPaymentPlan, myUpLoad },
   setup () {
     const data = reactive({
+      exportClick: (attachUrl: string) => {
+        const url = `/file/downloadFile?savePath=${attachUrl}`
+        const iframe = document.createElement('iframe')
+        iframe.src = url
+        iframe.style.display = 'none'
+        document.body.appendChild(iframe)
+      },
+      deleteClick: (attachmentId: number) => {
+        removeEnclosure(attachmentId).then((res: any) => {
+          if (res.data.code === 200) {
+            ElMessage.warning('附件删除成功 !')
+          }
+        })
+      },
+      fileClick: () => {
+        data.dialogTableVisible = true
+        fileList.value = detailObj.value.basAttachments
+        console.log(fileList.value)
+      },
       dateChange: (val: any, code: string) => {
         detailObj.value[code] = format(new Date(val), 'yyyy-MM-dd')
       },
@@ -221,8 +257,17 @@ export default defineComponent({
         console.log('//////', res.data)
       })
     }
+    // 附件
+    // 附件上传
+    const handleFileChange = (file: any, fileList: any) => {
+      detailObj.value.basAttachments = fileList
+    }
+    const handleRemove = (file: any, fileList: any) => {
+      detailObj.value.basAttachments = fileList
+    }
+
     return {
-      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, fileList, fileListClick
+      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, fileList, fileListClick, handleFileChange, handleRemove
     }
   }
 })
@@ -235,9 +280,6 @@ export default defineComponent({
 /deep/ .is-disabled .el-input__inner{
   color: #000 !important;
 }
-// /deep/ .el-button {
-//   width: 100px;
-// }
 /deep/ .el-button--text{
   width: auto;
 }
@@ -275,12 +317,25 @@ export default defineComponent({
           text-decoration: none;
           line-height: 32px;
         }
+        .itemFile{
+          cursor: pointer;
+          color: rgb(64, 158, 255)
+        }
       }
     }
     .buttonList{
       display: flex;
       justify-content: center;
     }
+  }
+}
+#fileBox{
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  li{
+    padding: 0;
+    height: 30px;
   }
 }
 .contract{

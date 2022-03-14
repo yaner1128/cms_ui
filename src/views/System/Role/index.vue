@@ -10,22 +10,32 @@
           <el-button type="success" @click="createClick">新增</el-button>
         </el-form-item>
       </el-form>
+      <el-pagination
+        v-model:currentPage="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :small="small"
+        :disabled="disabled"
+        :background="false"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="total"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
     </div>
     <div class="roleBox">
       <div class="title">角色列表</div>
       <div class="box">
         <el-table v-loading="loading" :data="roleData">
-          <el-table-column prop="name" label="名称"  />
-          <el-table-column prop="code" label="角色代码"  />
-          <el-table-column prop="permission" label="数据权限" />
-          <el-table-column prop="level" label="角色级别"  />
-          <el-table-column prop="desc" label="描述" />
-          <el-table-column prop="createDate" label="创建日期" />
+          <el-table-column prop="positionName" label="名称"  />
+          <el-table-column prop="positionLevel" label="值级"  />
+          <el-table-column prop="depId" label="所属部门" />
+          <el-table-column prop="createTime" label="创建时间" />
           <el-table-column label="操作">
             <template #default="scope">
               <el-button type="primary" size="small" @click="editClick(scope.row)">编辑</el-button>
               <el-button type="warning" size="small" @click="permissionClick(scope.row)">权限控制</el-button>
-              <el-popconfirm title="确认删除本条数据吗？">
+              <el-popconfirm title="确认删除本条数据吗？"  @confirm="deleteUser(scope.row.positionId)">
                 <template #reference>
                   <el-button type="danger" size="small">删除</el-button>
                 </template>
@@ -37,24 +47,16 @@
     </div>
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="500px">
       <el-form :model="createForm" :rules="rules" label-width="80px">
-        <el-form-item label="角色名称" prop="name">
-          <el-input v-model="createForm.name" autocomplete="off" :disabled="curTitle==='编辑'" placeholder="请输入角色名称"></el-input>
+        <el-form-item label="角色名称" prop="positionName">
+          <el-input v-model="createForm.positionName" placeholder="请输入角色名称"></el-input>
         </el-form-item>
-        <el-form-item label="角色代码" prop="code" v-if="curTitle==='编辑'">
-          <el-input v-model="createForm.code" autocomplete="off" :disabled="curTitle==='编辑'"></el-input>
-        </el-form-item>
-        <el-form-item label="角色级别" prop="level">
-          <el-input-number v-model="createForm.level" :min="1" controls-position="right" />
-        </el-form-item>
-        <el-form-item label="数据范围" prop="permission">
-          <el-select v-model="createForm.permission" placeholder="请选择数据范围">
-            <el-option label="范围1" value="范围1"></el-option>
-            <el-option label="范围2" value="范围2"></el-option>
-            <el-option label="范围3" value="范围3"></el-option>
+        <el-form-item label="所属部门" prop="depId">
+          <el-select v-model="createForm.depId" placeholder="请选择数据范围">
+            <el-option v-for="item in departAll" :key="item" :label="item.depName" :value="item.depId"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="描述信息" prop="desc">
-          <el-input v-model="createForm.desc" autocomplete="off"></el-input>
+        <el-form-item label="角色值级" prop="positionLevel">
+          <el-input v-model="createForm.positionLevel" autocomplete="off"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -70,9 +72,9 @@
         <div class="left">
           <div class="title">
             <span>菜单权限</span>
-            <el-button type="primary" v-show="isMeueSave" @click="saveClick">保存</el-button>
+            <el-button type="primary" size="small" @click="saveClick">保存</el-button>
           </div>
-          <div class="box" v-loading="loading2">
+          <div class="box">
             <el-tree
               ref="menuRef"
               @check="isMeueSave=true"
@@ -81,16 +83,32 @@
               :default-checked-keys="defaultKey"
               :props="{
                 children: 'children',
-                label: 'name',
+                label: 'permissionName',
+                value: 'permissionId'
               }"
               show-checkbox
-              node-key="name"/>
+              node-key="permissionId"/>
           </div>
         </div>
         <div class="right">
           <div class="title">
             <span>接口权限</span>
-            <el-button type="primary" v-show="isSave" @click="saveClick">保存</el-button>
+            <el-button type="primary" size="small" @click="saveClick">保存</el-button>
+          </div>
+          <div class="box">
+            <el-tree
+              ref="menuRef"
+              @check="isMeueSave=true"
+              :default-expand-all="true"
+              :data="treeData2"
+              :default-checked-keys="defaultKey"
+              :props="{
+                children: 'children',
+                label: 'apiDesc',
+                value: 'apiId'
+              }"
+              show-checkbox
+              node-key="apiId"/>
           </div>
         </div>
       </div>
@@ -100,141 +118,153 @@
 
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
-import { getAllRoleList } from '@/api/userList'
-import { getMenuList } from '@/api/menuList'
-import router from '@/router'
+import { queryAllDepartmentNames } from '@/api/userList'
+import { positionsAll, positionsAdd, positionsUpdate, positionsRemove } from '@/api/role'
+import { getAllMenuList } from '@/api/menu'
+import { queryResourceAddress } from '@/api/apiData'
+import { page } from '@/utils/page'
+import { ElMessage } from 'element-plus'
 
 const rules = reactive({
-  name: [
-    { required: true, message: '请输入角色名称', trigger: 'blur' }
+  positionName: [
+    { required: true, message: '请输入岗位名称', trigger: 'blur' }
   ],
-  code: [
-    { required: true, message: '请输入角色代码', trigger: 'blur' }
+  depId: [
+    { required: true, message: '请选择所属部门', trigger: 'change' }
   ],
-  level: [
-    { required: true, message: '请输入角色级别', trigger: 'blur' }
-  ],
-  permission: [
-    { required: true, message: '请选择数据范围', trigger: 'change' }
+  positionLevel: [
+    { required: true, message: '请输入岗位值级', trigger: 'blur' }
   ]
 })
-interface roleRowType {
-  name: string
-  code: string
-  permission: string
-  level: number
-  desc:string
-  createDate:string
-}
 export default defineComponent({
   name: 'System',
   components: {},
   setup () {
+    const { pageData } = page()
+
     const data = reactive({
       loading: false, // 表格加载
-      loading2: false, // 菜单加载
       isSave: false, // 是否显示保存按钮
       isMeueSave: false,
       curTitle: '新增',
       dialogFormVisible: false,
-      permissionBox: false
+      permissionBox: false,
+      handleCurrentChange: (val: number) => {
+        pageData.currentPage.value = val
+        getData()
+      },
+      handleSizeChange: (val: number) => {
+        pageData.pageSize.value = val
+        pageData.currentPage.value = 1
+        getData()
+      },
+      searchData: () => {
+        console.log(formInline.value)
+        getData()
+      },
+      createClick: () => {
+        data.dialogFormVisible = true
+        data.curTitle = '新增'
+        createForm.value = { positionName: '', positionLevel: '', permission: '', level: 0, desc: '', createDate: '' }
+      },
+      // 编辑
+      editClick: (row: any) => {
+        data.dialogFormVisible = true
+        data.curTitle = '编辑'
+        createForm.value = row
+      },
+      deleteUser: (positionId: number) => {
+        console.log(positionId)
+        positionsRemove(positionId).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('删除操作成功')
+            getData()
+          }
+        })
+      },
+      commitClick: () => { // 提交
+        data.dialogFormVisible = false
+        if (data.curTitle === '新增') {
+          positionsAdd(createForm.value).then(res => {
+            if (res.data.code === 200) {
+              ElMessage.success('新增成功')
+              getData()
+            }
+          })
+        } else {
+          positionsUpdate(createForm.value).then(res => {
+            if (res.data.code === 200) {
+              ElMessage.success('编辑成功')
+              getData()
+            }
+          })
+        }
+      }
     })
     const resData = toRefs(data)
 
-    // 表单
+    // 查询表单
     const formInline = ref({
       name: ''
     })
     // 查询表格数据
-    const roleData = ref<roleRowType[]>([])
+    const roleData = ref<any[]>([])
     const getData = () => {
       data.loading = true
-      const params = Object.assign({}, formInline.value)
-      getAllRoleList(params).then(res => {
-        roleData.value = res.data[0].data.data
+      const params = { currentPageIndex: pageData.currentPage.value, pageSize: pageData.pageSize.value }
+      positionsAll(params).then(res => {
+        roleData.value = res.data.data.records
+        pageData.total.value = res.data.data.total
         data.loading = false
       })
     }
     getData()
-    // 点击查询
-    const searchData = () => {
-      console.log(formInline.value)
-      getData()
-    }
-
-    const createForm = ref({ name: '', code: '', permission: '', level: 0, desc: '', createDate: '' })
-    // 获取菜单列表
-    const list = ref<unknown[]>([])
-    const routerList = () => {
-      const temp = router.options.routes.filter(item => {
-        item.children = item.children?.filter(child => {
-          return child.name
-        })
-        return item.meta?.isShow
-      })
-      temp.forEach(item => {
-        if (!item.name && item.children) {
-          item = item.children[0]
-        }
-        list.value.push(item)
-      })
-    }
-    routerList()
-    // 菜单数据
+    // 获取全部部门信息
+    const departAll = ref<any[]>([])
+    queryAllDepartmentNames().then(res => {
+      console.log(res.data)
+      departAll.value = res.data.data
+    })
+    // 权限菜单数据
     const treeData = ref<unknown[]>([])
-    // 点击新增角色
-    const createClick = () => {
-      data.dialogFormVisible = true
-      data.curTitle = '新增'
-      createForm.value = { name: '', code: '', permission: '', level: 0, desc: '', createDate: '' }
-    }
-    // 编辑
-    const editClick = (row: roleRowType) => {
-      data.dialogFormVisible = true
-      data.curTitle = '编辑'
-      createForm.value = row
-    }
-    // 提交
-    const commitClick = () => {
-      data.dialogFormVisible = false
-      if (data.curTitle === '新增') {
-        console.log('新增处理')
-      } else {
-        console.log('编辑处理')
-      }
-    }
+    getAllMenuList('').then(res => {
+      treeData.value = res.data.data
+    })
+    // 接口权限数据
+    const treeData2 = ref<unknown[]>([])
+    queryResourceAddress().then(res => {
+      treeData2.value = res.data.data
+    })
+    // 编辑新增表单
+    const createForm = ref<any>({ positionName: '', positionLevel: '', permission: '', level: 0, desc: '', createDate: '' })
     // 权限设置
-    const permissionClick = async (row: roleRowType) => {
+    const permissionClick = (row: any) => {
       data.permissionBox = true
-      data.loading2 = true
-      await getMenuList(row).then(res => {
-        console.log(res)
-        data.loading2 = false
-        treeData.value = [...list.value]
-        defaultKey.value = ['工作台', '项目列表']
-        console.log('***defaultKey.value***', defaultKey.value)
-      })
+      console.log(row)
+      //   defaultKey.value = ['工作台', '项目列表']
     }
     // 菜单默认选择的项
     const defaultKey = ref(['工作台'])
     // 菜单权限保存
     const menuRef = ref()
     const saveClick = () => {
-      data.loading2 = true
       setTimeout(() => {
-        data.loading2 = false
         data.isMeueSave = false
       }, 1000)
-      console.log('保存菜单权限', menuRef.value.getCheckedKeys(true))
     }
     // 接口权限
     return {
-      rules, ...resData, roleData, formInline, searchData, createForm, createClick, defaultKey, editClick, commitClick, treeData, saveClick, menuRef, permissionClick
+      ...pageData, rules, ...resData, roleData, formInline, departAll, createForm, defaultKey, treeData, treeData2, saveClick, menuRef, permissionClick
     }
   }
 })
 </script>
 <style lang="scss" scoped>
+.form{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
 .roleBox{
   display: flex;
   flex-direction: column;

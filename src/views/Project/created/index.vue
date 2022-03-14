@@ -205,14 +205,16 @@ export default defineComponent({
           for (var k in form.value) {
             fd.append(k, form.value[k])
           }
-          insertBatchSomeColumn(fd).then(() => {
-            ElMessage({
-              message: '新增成功, 跳转项目列表',
-              type: 'success'
-            })
-            setTimeout(() => {
-              router.push({ path: '/project', replace: true })
-            }, 1500)
+          insertBatchSomeColumn(fd).then((res) => {
+            if (res.data.code === 200) {
+              ElMessage({
+                message: '新增成功, 跳转项目列表',
+                type: 'success'
+              })
+              setTimeout(() => {
+                router.push({ path: '/project', replace: true })
+              }, 1500)
+            }
           })
         }
       })

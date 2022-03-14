@@ -22,7 +22,7 @@
       <el-table-column label="操作" fixed="right">
         <template #default="scope">
           <el-button type="text" size="small" v-show="isEdit" @click="editClick(scope.row)">编辑</el-button>
-          <el-button type="text" size="small" @click="upLoadView(scope.row)">附件</el-button>
+          <el-button type="text" size="small" @click="upLoadView(scope.row.basAttachments)">附件</el-button>
           <el-popconfirm title="确认删除本条数据吗？">
             <template #reference>
               <el-button type="text" size="small" v-show="isEdit">删除</el-button>
@@ -100,10 +100,9 @@ export default defineComponent({
         console.log(editForm.value)
         query.editDialog = false
       },
-      upLoadView: (row: purchaseDataType) => {
-        fileList.value = [{ attachmentName: '1111' }]
+      upLoadView: (basAttachments: any) => {
+        fileList.value = basAttachments || []
         query.dialogTableVisible = true
-        console.log(row)
       },
       filterTag: (value: number, row: purchaseDataType) => { // 过滤
         return row.inStatus === value
@@ -116,14 +115,7 @@ export default defineComponent({
     const purchaseData = ref<purchaseDataType[]>([])
     const getData = (query: { id: number }) => {
       getContractsByStatus({ projectId: query.id }).then(res => {
-        purchaseData.value = res.data.records
-        purchaseData.value = [{
-          amount: '12000',
-          contractId: 1,
-          contractName: '合同1',
-          inStatus: 0,
-          signDate: '2022-03-01'
-        }]
+        purchaseData.value = res.data.data.records
       })
     }
     const fileList = ref<any[]>([])

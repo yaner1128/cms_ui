@@ -42,6 +42,7 @@
 
 <script lang='ts'>
 import { getSelectContractId } from '@/api/details'
+import { AddPaymentPlan, modifyPaymentPlan, deletePaymentPlan } from '@/api/planData'
 import router from '@/router'
 import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -77,7 +78,7 @@ export default defineComponent({
         query.editDialog = true
       },
       editClick: (row: paymentPlanType) => {
-        editForm.value = row
+        editForm.value = JSON.parse(JSON.stringify(row))
         query.curentTitle = '编辑'
         query.editDialog = true
       },
@@ -89,10 +90,21 @@ export default defineComponent({
       commitEditClick: () => {
         console.log(editForm.value)
         query.editDialog = false
+        if (query.curentTitle === '新增') {
+          AddPaymentPlan(editForm.value).then(res => {
+            console.log(res)
+          })
+        } else {
+          console.log(editForm.value)
+          editForm.value.paymentRatio = Number(editForm.value.paymentRatio)
+          modifyPaymentPlan(editForm.value).then(res => {
+            console.log(res)
+          })
+        }
       }
     })
     const resData = toRefs(query)
-    const editForm = ref<paymentPlanType>({ paymentDate: '2022-03-01', paymentRatio: 20, amount: 120000 })
+    const editForm = ref<paymentPlanType>({ paymentDate: '', paymentRatio: 0, amount: '' })
     const fileList = ref<any>([])
 
     onMounted(() => {
@@ -111,11 +123,6 @@ export default defineComponent({
     const getData = (id: number) => {
       getSelectContractId({ projectId: id }).then(res => {
         paymentPlan.value = res.data.data
-        paymentPlan.value = [{
-          paymentDate: '2021-12-01',
-          paymentRatio: 20,
-          amount: 120000.00
-        }]
       })
     }
     return {

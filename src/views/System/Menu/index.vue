@@ -44,10 +44,10 @@
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="580px">
       <el-form ref="refForm" :model="form" label-width="80px" :rules="rules">
         <el-form-item label="父级菜单" prop="parentId">
-          <el-select v-model="form.parentId" placeholder="请选择父级菜单" aria-placeholder="请选择父级菜单">
-            <el-option label="无" :value="0"></el-option>
-            <el-option label="项目总览" :value="1"></el-option>
-          </el-select>
+          <el-cascader v-model="parentId"
+            @change="changePermission($event)"
+            :options="selectData"
+            :props="{ checkStrictly: true, label: 'permissionName', value: 'permissionId' }" placeholder="请选择父级菜单"></el-cascader>
         </el-form-item>
         <el-form-item label="图标">
           <el-dropdown trigger="hover">
@@ -90,8 +90,7 @@
 </template>
 
 <script lang='ts'>
-import router from '@/router'
-import { defineComponent, ref, reactive, toRefs, onUnmounted } from 'vue'
+import { defineComponent, ref, reactive, toRefs } from 'vue'
 import iconList from './module/iconData'
 import { getAllMenuList, permissionAdd, permissionUpdate, permissionDelete } from '@/api/menu'
 import { format } from '@/utils/dateFormat'
@@ -107,12 +106,6 @@ const rules = reactive({
   permissionUrl: [
     { required: true, message: '请输入路径', trigger: 'blur' }
   ]
-  // isShow: [
-  //   { required: true, message: '请选择所售产品', trigger: 'change' }
-  // ],
-  // module: [
-  //   { required: true, message: '请输入模块名称', trigger: 'blur' }
-  // ]
 })
 interface formType {
   parentId: number|string;
@@ -126,11 +119,19 @@ export default defineComponent({
   components: {},
   setup () {
     const data = reactive({
+      parentId: ref<any>([]),
       selectName: '',
       dialogFormVisible: false,
       curTitle: '新增',
+      changePermission: (val: any) => {
+        console.log(val)
+        form.value.parentId = val.slice(-1)[0]
+      },
       selectIcon: (icon: string) => {
         form.value.permissionIcon = icon
+      },
+      onSubmit: () => {
+        getData()
       },
       add: () => { // 新增
         data.dialogFormVisible = true
@@ -141,6 +142,7 @@ export default defineComponent({
         data.dialogFormVisible = true
         data.curTitle = '编辑'
         form.value = row
+        data.parentId = [form.value.parentId]
       },
       deleteClick: (permissionId: number) => { // 删除
         console.log(permissionId)
@@ -161,38 +163,37 @@ export default defineComponent({
     })
     // 表格数据
     const tableData = ref<any[]>([])
+    const selectData = ref<any[]>([])
     const getData = () => {
       getAllMenuList(data.selectName).then(res => {
         tableData.value = res.data.data
+        selectData.value = JSON.parse(JSON.stringify(tableData.value))
+        selectData.value.unshift({ permissionId: 0, permissionName: '无父级' })
       })
     }
     getData()
-    // 查询
-    const onSubmit = () => {
-      console.log('查询', data.selectName)
-      getData()
-    }
     // 提交
     const refForm = ref()
     const commitClick = () => {
       refForm.value.validate((valid:boolean) => {
         if (valid) {
           if (data.curTitle === '新增') {
+            console.log(form.value)
             // form.value.createTime = format(new Date(), 'yyyy-MM-dd')
             permissionAdd(form.value).then(res => {
               if (res.data.code === 200) {
                 ElMessage.success('新增菜单成功！')
+                getData()
+                data.dialogFormVisible = false
               }
-              getData()
-              data.dialogFormVisible = false
             })
           } else {
             permissionUpdate(form.value).then(res => {
               if (res.data.code === 200) {
                 ElMessage.success('编辑成功！')
+                getData()
+                data.dialogFormVisible = false
               }
-              getData()
-              data.dialogFormVisible = false
             })
           }
         }
@@ -200,7 +201,7 @@ export default defineComponent({
     }
 
     return {
-      refForm, rules, iconList, ...resData, form, tableData, onSubmit, commitClick
+      refForm, rules, iconList, ...resData, form, tableData, commitClick, selectData
     }
   }
 })
