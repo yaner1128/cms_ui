@@ -1,9 +1,9 @@
 import request from '@/utils/request'
 
-export function login (data: { username: string, password: string, rememberMe: boolean }) {
+export function login (params: any) {
   return request({
-    url: 'api/login',
+    url: '/ctms-auth/oauth/token',
     method: 'post',
-    data: data
+    params
   })
 }

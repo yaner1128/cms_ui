@@ -1,25 +1,25 @@
 import request from '@/utils/request'
 
 // 新增
-export function AddPaymentPlan (params: any) {
+export function AddPaymentPlan (data: any) {
   return request({
-    url: '/prjPaymentPlan/AddPaymentPlan',
+    url: '/ctms-project/prjPaymentPlan/AddPaymentPlan',
     method: 'post',
-    params
+    data
   })
 }
-// 修改岗位信息
-export function modifyPaymentPlan (params: any) {
+// 修改
+export function modifyPaymentPlan (data: any) {
   return request({
-    url: '/prjPaymentPlan/modifyPaymentPlan',
+    url: '/ctms-project/prjPaymentPlan/modifyPaymentPlan',
     method: 'post',
-    params
+    data
   })
 }
 // 删除
 export function deletePaymentPlan (paymentPlanId: number) {
   return request({
-    url: '/prjPaymentPlan/deletePaymentPlan?paymentPlanId=' + paymentPlanId,
+    url: '/ctms-project/prjPaymentPlan/deletePaymentPlan?paymentPlanId=' + paymentPlanId,
     method: 'post'
   })
 }

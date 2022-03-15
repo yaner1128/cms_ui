@@ -12,8 +12,8 @@ module.exports = {
     proxy: {
       '/': {
         // target: 'http://192.168.1.9:8201',
-        // target: 'http://192.168.1.166:8602',
-        target: 'http://192.168.1.213:8602', // 我的服务器地址
+        target: 'http://192.168.1.166:8201',
+        // target: 'http://192.168.1.213:8703', // 我的服务器地址
         changeOrigin: true // 接口跨域配置
         // pathRewrite方法重写url
         // pathRewrite: {

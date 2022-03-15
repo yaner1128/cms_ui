@@ -2,7 +2,7 @@ import request from '@/utils/request'
 // 查询
 export function userInformationQuery (params: any) {
   return request({
-    url: '/staff/userInformationQuery',
+    url: '/ctms-user/staff/userInformationQuery',
     method: 'post',
     params
   })
@@ -10,7 +10,7 @@ export function userInformationQuery (params: any) {
 // 新增
 export function addUserInformation (params: any) {
   return request({
-    url: '/staff/addUserInformation',
+    url: '/ctms-user/staff/addUserInformation',
     method: 'post',
     params
   })
@@ -18,7 +18,7 @@ export function addUserInformation (params: any) {
 // 修改
 export function updataUserInfo (params: any) {
   return request({
-    url: '/staff/modifyBasicUserInformation',
+    url: '/ctms-user/staff/modifyBasicUserInformation',
     method: 'post',
     params
   })
@@ -26,36 +26,21 @@ export function updataUserInfo (params: any) {
 // 删除
 export function deleteUserInformation (employeeId: number) {
   return request({
-    url: `/staff/deleteUserInformation?employeeId=${employeeId}`,
+    url: `/ctms-user/staff/deleteUserInformation?employeeId=${employeeId}`,
     method: 'post'
   })
 }
 // 部门列表
 export function queryAllDepartmentNames () {
   return request({
-    url: '/departments/queryAllDepartmentNames',
+    url: '/ctms-user/departments/queryAllDepartmentNames',
     method: 'post'
   })
 }
 // 获取职位
 export function getJobByDepartId (depId: number) {
   return request({
-    url: '/positions/queryByPositionID?depId=' + depId,
-    method: 'post'
-  })
-}
-
-export function getAllRoleList (params: any) {
-  return request({
-    url: 'api/allRoleList',
-    method: 'post',
-    data: params
-  })
-}
-
-export function getRoleList (data: any) {
-  return request({
-    url: 'api/roleList?id=' + data.id,
+    url: '/ctms-user/positions/queryByPositionID?depId=' + depId,
     method: 'post'
   })
 }

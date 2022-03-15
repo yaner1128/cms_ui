@@ -97,6 +97,7 @@ export default defineComponent({
     }
   },
   setup () {
+    console.log('88888', router.options.routes)
     const routerList = router.options.routes.filter(item => {
       item.children = item.children?.filter(child => {
         return child.name
@@ -124,12 +125,12 @@ export default defineComponent({
         router.push({ path: '/', replace: true })
       })
     }
-    if (!Cookies.get('userInfo')) {
+    if (!Cookies.get('ctms-web')) {
       router.push({ path: '/login', replace: true })
       ElMessage.error('登录过期, 请重新登录!')
     } else {
-      $store.commit('SET_USER', JSON.parse(getUserInfo()))
-      userInfo.value = JSON.parse(getUserInfo())
+      // $store.commit('SET_USER', JSON.parse(getUserInfo()))
+      // userInfo.value = JSON.parse(getUserInfo())
     }
 
     return {

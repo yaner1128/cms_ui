@@ -2,6 +2,8 @@ import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
 import Layout from '@/views/Layout/index.vue'
 import Cookies from 'js-cookie'
 import { ElMessage } from 'element-plus'
+import store from '@/store'
+import { getAllMenuList } from '@/api/menu'
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -19,6 +21,7 @@ const routes: Array<RouteRecordRaw> = [
       isShow: false
     }
   },
+  // 工作台
   {
     path: '/home',
     redirect: '/home',
@@ -92,17 +95,17 @@ const routes: Array<RouteRecordRaw> = [
         }
       },
       {
-        path: 'role',
-        name: '岗位管理',
-        component: () => import('@/views/System/Role/index.vue'),
+        path: 'depart',
+        name: '部门管理',
+        component: () => import('@/views/System/Depart/index.vue'),
         meta: {
           isShow: true
         }
       },
       {
-        path: 'depart',
-        name: '部门管理',
-        component: () => import('@/views/System/Depart/index.vue'),
+        path: 'role',
+        name: '岗位管理',
+        component: () => import('@/views/System/Role/index.vue'),
         meta: {
           isShow: true
         }
@@ -132,8 +135,27 @@ const router = createRouter({
   routes
 })
 
+// router.beforeEach(async (to, from, next) => {
+//   // 判断登录状态
+//   if (Cookies.get('ctms-web')) {
+//     if (to.path === '/login') {
+//       // 跳转首页
+//       next({ path: '/home' })
+//     } else {
+//       const routeData = await getAllMenuList('').then(res => {
+//         return res.data.data
+//       })
+//       router.addRoute(routeData)
+//       console.log('2222222', router.options)
+//       next()
+//     }
+//   } else {
+//     next({ path: '/login' })
+//     ElMessage.error('登录过期, 请重新登录!')
+//   }
+// })
 router.beforeEach((to, from, next) => {
-  if (to.path !== '/login' && !Cookies.get('userInfo')) {
+  if (to.path !== '/login' && !Cookies.get('ctms-web')) {
     next({ path: '/login' })
     ElMessage.error('登录过期, 请重新登录!')
   } else next()

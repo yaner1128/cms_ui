@@ -113,7 +113,7 @@
 
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
-import { userInformationQuery, addUserInformation, updataUserInfo, deleteUserInformation, queryAllDepartmentNames, getJobByDepartId, getRoleList, getAllRoleList } from '@/api/userList'
+import { userInformationQuery, addUserInformation, updataUserInfo, deleteUserInformation, queryAllDepartmentNames, getJobByDepartId } from '@/api/userList'
 import { page } from '@/utils/page'
 import { format } from '@/utils/dateFormat'
 import { ElMessage } from 'element-plus'
@@ -125,15 +125,6 @@ const rules = reactive({
   gender: [
     { required: true, message: '请选择性别', trigger: 'change' }
   ]
-  // employeeDate: [
-  //   { required: true, message: '请选择入职时间', trigger: 'change' }
-  // ]
-  // positionLevel: [
-  //   { required: true, message: '请选择职位', trigger: 'change' }
-  // ],
-  // depName: [
-  //   { required: true, message: '请选择所属部门', trigger: 'change' }
-  // ]
 })
 interface userDataType {
   positionLevel: string;
@@ -268,17 +259,17 @@ export default defineComponent({
     }
     // 获取所有角色
     const roleList = ref<roleListType[]>([])
-    getAllRoleList({}).then(res => {
-      roleList.value = res.data[0].data.data
-    })
+    // getAllRoleList({}).then(res => {
+    //   roleList.value = res.data[0].data.data
+    // })
     // 新增角色
     const curRoleData = ref<roleListType[]>([])
     const handleAddRole = (row: userDataType) => {
       data.outerVisible = true
       // 获取当前用户角色列表
-      getRoleList({ id: row.id }).then(res => {
-        curRoleData.value = res.data[0].data.data
-      })
+      // getRoleList({ id: row.id }).then(res => {
+      //   curRoleData.value = res.data[0].data.data
+      // })
     }
     const selectRole = () => {
       data.innerVisible = true

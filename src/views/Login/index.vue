@@ -28,6 +28,7 @@ import router from '@/router'
 import Cookies from 'js-cookie'
 import $store from '@/store'
 import { defineComponent, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 
 const rules = reactive({
   username: [
@@ -71,8 +72,9 @@ export default defineComponent({
           $store.dispatch('Login', loginForm.value).then(() => {
             loading.value = false
             router.push({ path: '/home', replace: true })
-          }).catch((rep) => {
-            console.log('error', rep)
+          }).catch(() => {
+            loading.value = false
+            ElMessage.error('请输入正确的用户名/密码！')
           })
         }
       })

@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 查询全部岗位信息
 export function positionsAll (params: { currentPageIndex: number, pageSize: number }) {
   return request({
-    url: '/positions/all',
+    url: '/ctms-user/positions/all',
     method: 'get',
     params
   })
@@ -11,7 +11,7 @@ export function positionsAll (params: { currentPageIndex: number, pageSize: numb
 // 新增
 export function positionsAdd (data: any) {
   return request({
-    url: '/positions/add',
+    url: '/ctms-user/positions/add',
     method: 'post',
     data
   })
@@ -19,7 +19,7 @@ export function positionsAdd (data: any) {
 // 修改岗位信息
 export function positionsUpdate (data: any) {
   return request({
-    url: '/positions/update',
+    url: '/ctms-user/positions/update',
     method: 'post',
     data
   })
@@ -27,7 +27,7 @@ export function positionsUpdate (data: any) {
 // 删除
 export function positionsRemove (positionId: number) {
   return request({
-    url: '/positions/remove?positionId=' + positionId,
+    url: '/ctms-user/positions/remove?positionId=' + positionId,
     method: 'post'
   })
 }

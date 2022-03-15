@@ -73,11 +73,6 @@ export default defineComponent({
       onSubmit: () => { // 查询
         getData()
       },
-      // getAll: () => {
-      //   queryAllDepartmentNames().then(res => {
-      //     allDepartment.value = res.data.data
-      //   })
-      // },
       // 新增
       add: () => {
         // data.getAll()

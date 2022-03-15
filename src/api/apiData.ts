@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 查询全部接口
 export function queryResourceAddress () {
   return request({
-    url: '/resources/queryResourceAddress',
+    url: '/ctms-user/resources/queryResourceAddress',
     method: 'post'
   })
 }

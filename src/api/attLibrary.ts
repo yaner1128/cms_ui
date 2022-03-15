@@ -9,7 +9,7 @@ export function getAttLibrary (data: string) {
 // 删除
 export function removeEnclosure (attachmentId: number) {
   return request({
-    url: `/enclosure/remove?attachmentId=${attachmentId}`,
+    url: `/ctms-user/enclosure/remove?attachmentId=${attachmentId}`,
     method: 'post'
   })
 }

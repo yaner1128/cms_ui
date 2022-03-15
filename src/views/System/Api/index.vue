@@ -10,13 +10,17 @@
       </div> -->
     </div>
     <el-table :data="tableData" border
-      row-key="id"
-      default-expand-all
+      row-key="apiId"
+      :default-expand-all="false"
     >
       <el-table-column type="selection" />
       <el-table-column fixed prop="apiDesc" label="名称" />
       <el-table-column prop="apiUrl" label="资源地址" />
-      <el-table-column prop="apiCategory" label="资源分类" />
+      <el-table-column prop="apiCategory" label="资源分类">
+        <template #default="scope">
+          <span>{{ apiCategory[scope.row.apiCategory].label }}</span>
+        </template>
+      </el-table-column>
       <el-table-column prop="createTime" label="创建时间" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
@@ -29,20 +33,6 @@
         </template>
       </el-table-column>
     </el-table>
-    <!-- <el-pagination
-      v-model:currentPage="currentPage"
-      v-model:page-size="pageSize"
-      :page-sizes="[100, 200, 300, 400]"
-      :small="small"
-      :disabled="disabled"
-      :background="background"
-      layout="total, sizes, prev, pager, next, jumper"
-      :total="total"
-      @size-change="handleSizeChange"
-      @current-change="handleCurrentChange"
-    >
-    </el-pagination> -->
-
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="600px">
       <el-form :model="form" label-width="80px">
         <el-form-item label="资源名称">

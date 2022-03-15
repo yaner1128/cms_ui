@@ -99,7 +99,7 @@
             <el-tree
               ref="menuRef"
               @check="isMeueSave=true"
-              :default-expand-all="true"
+              :default-expand-all="false"
               :data="treeData2"
               :default-checked-keys="defaultKey"
               :props="{
@@ -300,6 +300,10 @@ export default defineComponent({
   .left,.right{
     flex: 0 1 50%;
     border: 1px solid #e0e0e0;
+    .box{
+      height: 560px;
+      overflow: auto;
+    }
     .title{
       height: 50px;
       border-bottom: 1px solid #eee;

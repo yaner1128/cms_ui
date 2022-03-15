@@ -20,15 +20,13 @@
     </el-table>
     <el-dialog v-model="editDialog" :title="curentTitle" width="600px">
       <el-form :model="editForm" class="demo-form-inline" label-width="100px">
-        <el-form-item label="名称">
+        <el-form-item label="付款日期">
           <el-date-picker v-model="value1" type="date" placeholder="请选择付款日期" @change="changeVal($event)"></el-date-picker>
         </el-form-item>
         <el-form-item label="付款比例(%)">
-          <!-- <el-input type="number" v-model="editForm.paymentRatio" placeholder="请输入付款比例"></el-input> -->
           <el-input-number v-model="editForm.paymentRatio" :precision="2" :step="1" :max="100" />
         </el-form-item>
-        <el-form-item label="金额">
-          <!-- <el-input v-model="editForm.amount" placeholder="请输入付款金额"></el-input> -->
+        <el-form-item label="付款额">
           <el-input-number v-model="editForm.amount" :precision="2" :step="1" />
         </el-form-item>
         <el-form-item label="是否已付款">
@@ -36,6 +34,20 @@
             <el-option label="是" value="是"></el-option>
             <el-option label="否" value="否"></el-option>
           </el-select>
+        </el-form-item>
+        <el-form-item label="附件">
+          <el-upload
+            class="upload-demo"
+            ref="uploadRef"
+            accept="image/*,.pdf"
+            :limit="1"
+            action=""
+            :on-change="handleFileChange"
+            :on-remove="handleRemove"
+            :auto-upload="false"
+            >
+            <el-button type="text">上传附件</el-button>
+          </el-upload>
         </el-form-item>
         <el-form-item class="buttonList">
           <el-button type="primary" @click="commitEditClick">确认</el-button>
@@ -63,6 +75,7 @@ interface paymentPlanType {
   paymentRatio: number;
   amount: number;
   isPaied: string;
+  [propname: string]: any;
 }
 interface fileType {
   uploadTime: string;
@@ -79,6 +92,7 @@ export default defineComponent({
     // 判断是否带参数
     const query = reactive({
       value1: '',
+      file: ref<any>(''),
       isEdit: router.currentRoute.value.query.flag !== 'false',
       id: Number(router.currentRoute.value.query.id),
       editDialog: false,
@@ -104,12 +118,19 @@ export default defineComponent({
         console.log(row)
       },
       commitEditClick: () => {
-        console.log(editForm.value)
         query.editDialog = false
+
+        const params = Object.assign({ contractId: localStorage.getItem('saleId'), projectId: query.id, file: query.file, leaderId: 1 }, editForm.value)
+        const fd = new FormData()
+        for (var key in params) {
+          fd.append(key, params[key])
+        }
+        console.log(params)
+        console.log('file', fd.get('file'))
         if (query.curentTitle === '新增') {
-          console.log(editForm.value)
-          AddPaymentPlan(editForm.value).then(res => {
+          AddPaymentPlan(fd).then(res => {
             console.log(res)
+            getData()
           })
         } else {
           console.log(editForm.value)
@@ -126,7 +147,7 @@ export default defineComponent({
 
     onMounted(() => {
       if (query && query.id) {
-        getData(query.id)
+        getData()
       } else {
         ElMessage.warning('获取失败, 跳转首页 !')
         setTimeout(() => {
@@ -137,13 +158,21 @@ export default defineComponent({
     // 付款计划
     const paymentPlan = ref<paymentPlanType[]>([])
 
-    const getData = (id: number) => {
-      getSelectContractId({ projectId: id }).then(res => {
+    const getData = () => {
+      getSelectContractId({ projectId: query.id }).then(res => {
         paymentPlan.value = res.data.data
       })
     }
+    // 附件上传
+    const handleFileChange = (file: any, fileList: any) => {
+      query.file = file.raw
+      // detailObj.value.basAttachments = fileList[0].raw
+    }
+    const handleRemove = (file: any, fileList: any) => {
+      console.log(file)
+    }
     return {
-      ...resData, paymentPlan, editForm, fileList
+      ...resData, paymentPlan, editForm, fileList, handleFileChange, handleRemove
     }
   }
 })

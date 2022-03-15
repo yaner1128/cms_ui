@@ -92,7 +92,6 @@
             <ul id="fileBox" v-if="detailObj.basAttachments">
               <li v-for="item in detailObj.basAttachments" :key="item">
                 <span class="itemFile" @click="exportClick(item.attachUrl)">{{ item.attachmentName || '附件名称'}}</span>
-                <!-- <el-button v-show="isEdit" type="text">更新附件</el-button> -->
                 <el-upload v-show="isEdit"
                   class="upload-demo"
                   ref="uploadRef"
@@ -109,6 +108,7 @@
               </li>
             </ul>
             <el-upload v-else
+              v-show="isEdit"
               class="upload-demo"
               ref="uploadRef"
               accept="image/*,.pdf"
@@ -138,7 +138,7 @@
         <el-tab-pane label="销售合同">
           <my-sales></my-sales>
         </el-tab-pane>
-        <el-tab-pane label="付款计划">
+        <el-tab-pane label="付款计划" v-if="isSale">
           <my-payment-plan></my-payment-plan>
         </el-tab-pane>
       </el-tabs>
@@ -158,6 +158,7 @@ import myPaymentPlan from './modules/paymentPlan.vue'
 import myUpLoad from '@/components/upload.vue'
 import { format } from '@/utils/dateFormat'
 import { removeEnclosure } from '@/api/attLibrary'
+import store from '@/store'
 
 interface stepListType {
   title: string
@@ -177,9 +178,17 @@ interface fileType {
 export default defineComponent({
   name: 'Details',
   components: { myPurchase, mySales, myPaymentPlan, myUpLoad },
+  computed: {
+    isSale: () => {
+      console.log(store.state.isSale)
+      return store.state.isSale
+    }
+  },
   setup () {
     const data = reactive({
       exportClick: (attachUrl: string) => {
+        // eslint-disable-next-line no-debugger
+        debugger
         const url = `/file/downloadFile?savePath=${attachUrl}`
         const iframe = document.createElement('iframe')
         iframe.src = url
@@ -215,13 +224,7 @@ export default defineComponent({
     // 附件操作
     const fileList = ref<fileType[]>([])
     const fileListClick = () => {
-      fileList.value = [{
-        uploadTime: 'string',
-        attachmentName: 'string',
-        projectName: 'string',
-        fileType: 'string',
-        attchmentType: 'string'
-      }]
+      fileList.value = []
       data.dialogTableVisible = true
       // fileList.value = detailObj.value.fileList
     }

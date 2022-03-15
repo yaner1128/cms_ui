@@ -53,7 +53,7 @@
       <el-table-column label="操作">
         <template #default="scope">
           <router-link class="link" :to="detailClick(scope.row,'false')">查看</router-link>
-          <router-link class="link" v-if="checkPermission(['ADMIN'])" :to="detailClick(scope.row,'true')">编辑</router-link>
+          <router-link class="link" :to="detailClick(scope.row,'true')">编辑</router-link>
         </template>
       </el-table-column>
     </el-table>
