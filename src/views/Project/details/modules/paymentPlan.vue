@@ -5,6 +5,7 @@
       <el-table-column prop="paymentDate" label="付款日期" />
       <el-table-column prop="paymentRatio" label="付款比例(%)"  />
       <el-table-column prop="amount" label="金额" />
+      <el-table-column prop="isPaied" label="是否已付款" />
       <el-table-column label="操作" fixed="right">
         <template #default="scope">
           <el-button type="text" size="small" v-show="isEdit" @click="editClick(scope.row)">编辑</el-button>
@@ -20,13 +21,21 @@
     <el-dialog v-model="editDialog" :title="curentTitle" width="600px">
       <el-form :model="editForm" class="demo-form-inline" label-width="100px">
         <el-form-item label="名称">
-          <el-date-picker v-model="editForm.paymentDate" type="date" placeholder="请选择付款日期"></el-date-picker>
+          <el-date-picker v-model="value1" type="date" placeholder="请选择付款日期" @change="changeVal($event)"></el-date-picker>
         </el-form-item>
         <el-form-item label="付款比例(%)">
-          <el-input v-model="editForm.paymentRatio" placeholder="请输入付款比例"></el-input>
+          <!-- <el-input type="number" v-model="editForm.paymentRatio" placeholder="请输入付款比例"></el-input> -->
+          <el-input-number v-model="editForm.paymentRatio" :precision="2" :step="1" :max="100" />
         </el-form-item>
         <el-form-item label="金额">
-          <el-input v-model="editForm.amount" placeholder="请输入付款金额"></el-input>
+          <!-- <el-input v-model="editForm.amount" placeholder="请输入付款金额"></el-input> -->
+          <el-input-number v-model="editForm.amount" :precision="2" :step="1" />
+        </el-form-item>
+        <el-form-item label="是否已付款">
+          <el-select placeholder="请选择是否付款" v-model="editForm.isPaied">
+            <el-option label="是" value="是"></el-option>
+            <el-option label="否" value="否"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item class="buttonList">
           <el-button type="primary" @click="commitEditClick">确认</el-button>
@@ -47,11 +56,13 @@ import router from '@/router'
 import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue'
 import { ElMessage } from 'element-plus'
 import myUpLoad from '@/components/upload.vue'
+import { format } from '@/utils/dateFormat'
 
 interface paymentPlanType {
   paymentDate: string
-  paymentRatio: number|string;
-  amount: number|string;
+  paymentRatio: number;
+  amount: number;
+  isPaied: string;
 }
 interface fileType {
   uploadTime: string;
@@ -67,14 +78,19 @@ export default defineComponent({
   setup () {
     // 判断是否带参数
     const query = reactive({
+      value1: '',
       isEdit: router.currentRoute.value.query.flag !== 'false',
       id: Number(router.currentRoute.value.query.id),
       editDialog: false,
       dialogTableVisible: false,
       curentTitle: '新增',
+      changeVal: (val: any) => {
+        editForm.value.paymentDate = format(new Date(val), 'yyyy-MM-dd')
+      },
       addClick: () => {
         query.curentTitle = '新增'
-        editForm.value = { paymentDate: '', paymentRatio: 0, amount: '' }
+        editForm.value = { paymentDate: '', paymentRatio: 0, amount: 0, isPaied: '' }
+        query.value1 = ''
         query.editDialog = true
       },
       editClick: (row: paymentPlanType) => {
@@ -91,6 +107,7 @@ export default defineComponent({
         console.log(editForm.value)
         query.editDialog = false
         if (query.curentTitle === '新增') {
+          console.log(editForm.value)
           AddPaymentPlan(editForm.value).then(res => {
             console.log(res)
           })
@@ -104,7 +121,7 @@ export default defineComponent({
       }
     })
     const resData = toRefs(query)
-    const editForm = ref<paymentPlanType>({ paymentDate: '', paymentRatio: 0, amount: '' })
+    const editForm = ref<paymentPlanType>({ paymentDate: '', paymentRatio: 0, amount: 0, isPaied: '' })
     const fileList = ref<any>([])
 
     onMounted(() => {
@@ -132,4 +149,7 @@ export default defineComponent({
 })
 </script>
 <style lang="scss" scoped>
+/deep/ .el-input-number{
+  width: 240px;
+}
 </style>

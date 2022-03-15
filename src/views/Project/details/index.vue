@@ -92,11 +92,24 @@
             <ul id="fileBox" v-if="detailObj.basAttachments">
               <li v-for="item in detailObj.basAttachments" :key="item">
                 <span class="itemFile" @click="exportClick(item.attachUrl)">{{ item.attachmentName || '附件名称'}}</span>
-                <el-button v-show="isEdit" type="text">编辑</el-button>
+                <!-- <el-button v-show="isEdit" type="text">更新附件</el-button> -->
+                <el-upload v-show="isEdit"
+                  class="upload-demo"
+                  ref="uploadRef"
+                  accept="image/*,.pdf"
+                  :limit="1"
+                  action=""
+                  :on-change="handleFileChange"
+                  :on-remove="handleRemove"
+                  :auto-upload="false"
+                  >
+                  <el-button type="text">更新附件 </el-button>
+                </el-upload>
                 <el-button v-show="isEdit" type="text" @click="deleteClick(item.attachmentId)">删除</el-button>
               </li>
             </ul>
-            <el-upload class="upload-demo"
+            <el-upload v-else
+              class="upload-demo"
               ref="uploadRef"
               accept="image/*,.pdf"
               :limit="1"
@@ -260,10 +273,10 @@ export default defineComponent({
     // 附件
     // 附件上传
     const handleFileChange = (file: any, fileList: any) => {
-      detailObj.value.basAttachments = fileList
+      detailObj.value.basAttachments = fileList[0].raw
     }
     const handleRemove = (file: any, fileList: any) => {
-      detailObj.value.basAttachments = fileList
+      detailObj.value.basAttachments = fileList[0].raw || []
     }
 
     return {
