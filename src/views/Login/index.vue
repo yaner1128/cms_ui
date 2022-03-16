@@ -50,19 +50,6 @@ export default defineComponent({
       password: '',
       rememberMe: false
     })
-
-    const getCookie = () => {
-      const username = Cookies.get('username')
-      const password = Cookies.get('password')
-      const rememberMe = Cookies.get('rememberMe')
-
-      loginForm.value = {
-        username: username === undefined ? loginForm.value.username : username,
-        password: password === undefined ? loginForm.value.password : password,
-        rememberMe: rememberMe === undefined ? false : Boolean(rememberMe)
-      }
-    }
-    getCookie()
     // 表单校验
     const refForm = ref()
     const login = () => {
@@ -72,8 +59,8 @@ export default defineComponent({
           // 校验成功
           $store.dispatch('Login', loginForm.value).then(() => {
             loading.value = false
-            loadByUsername(loginForm.value.username).then(res => {
-              $store.commit('setUser', res.data)
+            loadByUsername().then(res => {
+              $store.commit('setUser', res.data.data)
             })
             router.push({ path: '/home', replace: true })
           }).catch(() => {

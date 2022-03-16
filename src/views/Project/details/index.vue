@@ -191,6 +191,7 @@ export default defineComponent({
         debugger
         const url = `/file/downloadFile?savePath=${attachUrl}`
         const iframe = document.createElement('iframe')
+        // iframe.Authorization = 'Bearer ' + localStorage.getItem('token')
         iframe.src = url
         iframe.style.display = 'none'
         document.body.appendChild(iframe)

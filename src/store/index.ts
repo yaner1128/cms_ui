@@ -12,6 +12,7 @@ export default createStore({
   mutations: {
     SET_TOKEN: (state, tokenData) => {
       state.token = tokenData.token
+      localStorage.setItem('token', tokenData.token)
       setToken(tokenData)
     },
     SET_USER: (state, userInfo) => {

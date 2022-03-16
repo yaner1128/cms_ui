@@ -53,11 +53,10 @@
 <script lang='ts'>
 import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue'
 import * as echarts from 'echarts'
-import Cookies from 'js-cookie'
-import { getProjectUndoneList, getAllCollectionPlans, getListUnfinishedProjects } from '@/api/workbench'
 import checkPermission from '@/utils/permission'
 import { page } from '@/utils/page'
 import store from '@/store'
+import { getProjectUndoneList, getAllCollectionPlans, getListUnfinishedProjects } from '@/api/workbench'
 
 interface typeWorkbench {
   projectId: number
@@ -75,7 +74,6 @@ export default defineComponent({
   setup () {
     const { pageData } = page()
     // 获取用户信息
-    store.commit('getUser')
     const userInfo = store.state.userInfo
 
     const data = reactive({

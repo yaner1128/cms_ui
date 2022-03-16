@@ -32,7 +32,7 @@
               <el-breadcrumb-item :to="{ path: '/home' }">工作台</el-breadcrumb-item>
               <el-breadcrumb-item v-for="(item,index) in breadcrumbList" :key="index" :to="{path: item.path}">{{ item.name }}</el-breadcrumb-item>
             </el-breadcrumb>
-            <div class="userName">{{ userInfo.user_name }} {{ currentDataName }}好!</div>
+            <div class="userName">{{ userInfo.employeeName }} {{ currentDataName }}好!</div>
             <el-dropdown>
               <div class="ava">
                 <img src="../../assets/person.png" alt="">
@@ -111,8 +111,6 @@ export default defineComponent({
     const userInfo = ref<any>({})
     $store.commit('getUser')
     userInfo.value = $store.state.userInfo
-    console.log('userInfo', userInfo)
-
     /**
      * 退出登录
      */

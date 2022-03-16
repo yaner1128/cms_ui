@@ -7,6 +7,12 @@
           <el-form-item label="项目名称:" prop="projectName">
             <el-input v-model="form.projectName" clearable></el-input>
           </el-form-item>
+          <el-form-item label="是否验收:" prop="isChecked">
+            <el-select v-model="form.isChecked" placeholder="请选择" clearable>
+              <el-option label="是" value="是"></el-option>
+              <el-option label="否" value="否"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item label="项目类型:" prop="projectType">
             <el-select v-model="form.projectType" placeholder="请选择项目类型" @change="changeType">
               <el-option label="自营软件项目" :value="0"></el-option>
@@ -18,6 +24,11 @@
               <el-option v-for="(item,index) in ownerList" :key="index" :label="item.employeeName" :value="item.employeeId"></el-option>
             </el-select>
           </el-form-item>
+          <el-form-item label="所售产品:" prop="productId">
+            <el-select v-model="form.productId" placeholder="请选择所售产品">
+              <el-option v-for="(item,index) in productList" :key="index" :label="item.productName" :value="item.productId"></el-option>
+            </el-select>
+          </el-form-item>
           <el-form-item label="是否招投标:" prop="isBidding">
             <el-switch v-model="form.isBidding" active-color="#13ce66" inactive-color="#DCDFE6" active-value="1" inactive-value="0"></el-switch>
           </el-form-item>
@@ -25,22 +36,18 @@
             <el-date-picker v-model="value1" type="date" placeholder="请选择招标日期" @change="dateChange('inviteTendersDate', $event)"></el-date-picker>
           </el-form-item>
           <el-form-item label="是否中标:" prop="isWin" v-show="form.isBidding==='1'">
-            <!-- <el-switch v-model="form.isWin" active-color="#13ce66" inactive-color="#DCDFE6" active-value="是" inactive-value="否"></el-switch> -->
             <el-select v-model="form.isWin" placeholder="请选择" clearable>
               <el-option label="是" value="是"></el-option>
               <el-option label="否" value="否"></el-option>
             </el-select>
           </el-form-item>
           <el-form-item label="中标公司:" v-show="form.isWin==='是'">
-            <el-input v-model="form.companyId" clearable></el-input>
+            <el-select v-model="form.companyId" placeholder="请选择中标公司" clearable>
+              <el-option v-for="item in companyList" :key="item" :label="item.companyName" :value="item.companyId"></el-option>
+            </el-select>
           </el-form-item>
           <el-form-item label="中标日期:" v-show="form.isWin==='是'">
             <el-date-picker v-model="value2" type="date" placeholder="请选择招标日期" @change="dateChange('winBiddingDate', $event)"></el-date-picker>
-          </el-form-item>
-          <el-form-item label="所售产品:" prop="productId">
-            <el-select v-model="form.productId" placeholder="请选择所售产品">
-              <el-option v-for="(item,index) in productList" :key="index" :label="item.productName" :value="item.productId"></el-option>
-            </el-select>
           </el-form-item>
           <el-form-item label="销售数量:" prop="saleCount">
             <el-input-number v-model="form.saleCount" controls-position="right" :min="0"></el-input-number>
@@ -63,11 +70,8 @@
               <el-option v-for="item in parentList" :key="item.areaCode" :label="item.areaName" :value="item.areaCode"></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="是否验收:" prop="isChecked">
-            <el-select v-model="form.isChecked" placeholder="请选择" clearable>
-              <el-option label="是" value="是"></el-option>
-              <el-option label="否" value="否"></el-option>
-            </el-select>
+          <el-form-item label="备注信息:" prop="remark">
+            <el-input v-model="form.remark" clearable></el-input>
           </el-form-item>
           <el-form-item label="项目附件:" class="annexItem">
             <el-upload
@@ -98,13 +102,14 @@
 
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
+import router from '@/router'
+import { ElMessage } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 import { getSelectArea, getSelectParent, getProducts, getUserList, insertBatchSomeColumn } from '@/api/created'
 import { format } from '@/utils/dateFormat'
-import { getUserInfo } from '@/utils/token'
-import router from '@/router'
-import { ElMessage, ElUpload } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
-import axios from 'axios'
+import handleFd from '@/utils/formData'
+import store from '@/store'
+import { selectCompanys } from '@/api/company'
 
 const rules = reactive({
   projectName: [
@@ -130,8 +135,10 @@ interface ownerDataType {
 }
 interface fromType {
   projectName: string;
-  projectType: string|number;
-  leaderId: string|number;
+  projectType: number|string;
+  productId: string|number;
+  isChecked: string;
+  leaderId: number|string;
   [propname: string]: any;
 }
 interface regionType{
@@ -144,25 +151,23 @@ export default defineComponent({
   name: 'created',
   components: { UploadFilled },
   setup () {
-    // 附件
-    const fileData = ref<any[]>([])
+    const userInfo = ref<any>(store.state.userInfo)
+    // 表单
+    const form = ref<fromType>({ projectName: '', projectType: '', productId: '', isChecked: '', leaderId: '', saleCount: 0, purchaseCount: 0 })
     // 区域
     const areaList = ref<regionType[]>([])
     const parentList = ref<regionType[]>([])
     // 责任人、产品数据
     const ownerList = ref<ownerDataType[]>([])
+    const companyList = ref<{companyName: string, companyId: number}[]>([])
     const productList = ref<{productName: string, productId: number}[]>([])
     const data = reactive({
       value1: '', // 时间
       value2: '', // 时间
-      areaLevel: 0,
+      file: '', // 附件
+      areaLevel: 0, // 直辖市code
       dateChange: (code: string, val: any) => { // 日期范围修改方法
         form.value[code] = format(new Date(val), 'yyyy-MM-dd')
-      },
-      changeType: (val: unknown) => {
-        if (val === 0) {
-          form.value.leaderId = 1
-        }
       },
       changeRegion: (val: any) => { // 获取省份列表
         form.value.cityCode = ''
@@ -178,33 +183,48 @@ export default defineComponent({
       }
     })
     const resData = toRefs(data)
-    const form = ref<fromType>({ projectName: '', projectType: '', leaderId: '', isBidding: 0, productId: '', saleCount: 0, purchaseCount: 0, saleAmount: '', purchaseAmount: '', provinceCode: '', cityCode: '' })
 
-    // 获取选择框下拉数据
+    /**
+     * 获取所有选择框下拉数据
+     * promise1: 获取责任人列表
+     * promise2: 获取产品列表
+     * promise3: 获取区域列表
+     * promise4: 获取全部公司列表
+     */
     const getData = () => {
       const promise1 = getUserList()
       const promise2 = getProducts()
       const promise3 = getSelectArea()
-      Promise.all([promise1, promise2, promise3]).then(res => {
+      const promise4 = selectCompanys()
+      Promise.all([promise1, promise2, promise3, promise4]).then(res => {
         ownerList.value = res[0].data.data
         productList.value = res[1].data.data
         areaList.value = res[2].data.data
+        companyList.value = res[3].data.data
       })
     }
     getData()
-    // 校验表单
+    /**
+     * 所选产品为自有软件 责任人默认设置为罗真
+     */
+    const changeType = (val: unknown) => {
+      if (val === 0) {
+        form.value.leaderId = 1
+      }
+    }
+    /**
+     * 校验表单之后提交
+     */
     const refForm = ref()
     const onSubmit = () => {
-      console.log('fileData.value', fileData.value)
       refForm.value.validate((valid:boolean) => {
         if (valid) {
-          const fd = new FormData()
-          if (fileData.value.length > 0) {
-            fd.append('file', fileData.value[0].raw)
-          }
-          for (var k in form.value) {
-            fd.append(k, form.value[k])
-          }
+          const params = Object.assign({
+            file: data.file,
+            createUser: userInfo.value.employeeId,
+            createTime: format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+          }, form.value)
+          const fd = handleFd(params)
           insertBatchSomeColumn(fd).then((res) => {
             if (res.data.code === 200) {
               ElMessage({
@@ -221,38 +241,30 @@ export default defineComponent({
     }
     // 重置
     const reset = () => {
-      form.value = { projectName: '', projectType: '', leaderId: '', isBidding: 0, productId: '', saleCount: 0, purchaseCount: 0, saleAmount: 0, purchaseAmount: 0, provinceCode: '', cityCode: '' }
+      form.value = { projectName: '', projectType: '', productId: '', isChecked: '', leaderId: '' }
     }
     const handleFileChange = (file: any, fileList: any) => {
-      fileData.value = fileList
+      data.file = file.raw
+      // fileData.value = fileList
     }
     const handleRemove = (file: any, fileList: any) => {
-      fileData.value = fileList
+      // fileData.value = fileList
     }
-    // const uploadRef = ref<InstanceType<typeof ElUpload>>()
-    // 附件提交
-    // const submitUpload = () => {
-    //   uploadRef.value!.submit()
-    // }
-    // const imggreySuccess = (file: any) => {
-    //   console.log(file)
-    // }
-    // const uploadError = (error: unknown) => {
-    //   console.log(error)
-    //   ElMessage.warning('导入失败!')
-    // }
     return {
-      ...resData, areaList, parentList, ownerList, productList, form, rules, refForm, onSubmit, reset, handleFileChange, handleRemove
+      rules, ...resData, areaList, parentList, ownerList, productList, companyList, form, refForm, changeType, onSubmit, reset, handleFileChange, handleRemove
     }
   }
 })
 </script>
 
 <style lang="scss" scoped>
-/deep/ .el-select,.el-input-number{
+/deep/ .el-select,.el-input-number {
   width: 360px;
 }
 /deep/ .el-cascader{
+  width: 360px;
+}
+/deep/ .el-date-editor{
   width: 360px;
 }
 .mainBox{

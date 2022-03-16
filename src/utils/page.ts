@@ -1,5 +1,4 @@
-import { inputEmits } from 'element-plus'
-import { initCustomFormatter, reactive, toRefs } from 'vue'
+import { reactive, toRefs } from 'vue'
 
 export function page () {
   const page = reactive({
