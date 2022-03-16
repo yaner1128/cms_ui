@@ -7,3 +7,10 @@ export function login (params: any) {
     params
   })
 }
+// 根据用户名获取用户信息
+export function loadByUsername (username: string) {
+  return request({
+    url: '/ctms-user/users/loadByUsername?username=' + username,
+    method: 'get'
+  })
+}

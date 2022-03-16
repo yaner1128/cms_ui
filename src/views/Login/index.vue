@@ -29,6 +29,7 @@ import Cookies from 'js-cookie'
 import $store from '@/store'
 import { defineComponent, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { loadByUsername } from '@/api/login'
 
 const rules = reactive({
   username: [
@@ -71,6 +72,9 @@ export default defineComponent({
           // 校验成功
           $store.dispatch('Login', loginForm.value).then(() => {
             loading.value = false
+            loadByUsername(loginForm.value.username).then(res => {
+              $store.commit('setUser', res.data)
+            })
             router.push({ path: '/home', replace: true })
           }).catch(() => {
             loading.value = false

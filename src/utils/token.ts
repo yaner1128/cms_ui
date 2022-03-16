@@ -18,10 +18,6 @@ export function removeToken () {
 export function getUserInfo () {
   return localStorage.getItem('userInfo') || {}
 }
-// 保存用户信息
-export function setUserInfo (userInfo: string) {
-  return localStorage.setItem('userInfo', userInfo)
-}
 // 移除用户信息
 export function removeUserInfo () {
   return localStorage.removeItem('userInfo')

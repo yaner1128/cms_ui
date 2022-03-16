@@ -17,7 +17,7 @@ export function getSalesContract (data:{ projectId: number }) {
 // 付款计划
 export function getSelectContractId (data:{ projectId: number }) {
   return request({
-    url: `/ctms-project/prjPaymentPlan/selectContractId?contractId=${data.projectId}`,
+    url: `/ctms-project/prjPaymentPlan/selectContractId?projectId=${data.projectId}`,
     method: 'post'
   })
 }

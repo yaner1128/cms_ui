@@ -22,31 +22,17 @@
               </el-sub-menu>
               <el-menu-item v-else v-for="item in route.children" :key="item.path" :index="item.path">{{ item.name }}</el-menu-item>
             </template>
-            <!-- <el-menu-item index="/home">工作台</el-menu-item>
-            <el-sub-menu index="/project">
-              <template #title>项目总览</template>
-              <el-menu-item index="/project/projectList">项目列表</el-menu-item>
-              <el-menu-item index="/project/created">新建项目</el-menu-item>
-            </el-sub-menu>
-            <el-menu-item index="/AttLibrary">附件库</el-menu-item>
-            <el-sub-menu index="/System">
-              <template #title>系统设置</template>
-              <el-menu-item index="/System/role">角色管理</el-menu-item>
-              <el-menu-item index="/System/user">用户管理</el-menu-item>
-            </el-sub-menu> -->
           </el-menu>
         </el-scrollbar>
       </el-aside>
-
       <el-container>
         <el-header>
           <div class="toolbar">
             <el-breadcrumb separator="/">
-              <el-breadcrumb-item :to="{ path: '/home' }">主页</el-breadcrumb-item>
+              <el-breadcrumb-item :to="{ path: '/home' }">工作台</el-breadcrumb-item>
               <el-breadcrumb-item v-for="(item,index) in breadcrumbList" :key="index" :to="{path: item.path}">{{ item.name }}</el-breadcrumb-item>
-              <!-- <el-breadcrumb-item>promotion detail</el-breadcrumb-item> -->
             </el-breadcrumb>
-            <div class="userName">{{ userInfo.username }} {{ currentDataName() }}好!</div>
+            <div class="userName">{{ userInfo.user_name }} {{ currentDataName }}好!</div>
             <el-dropdown>
               <div class="ava">
                 <img src="../../assets/person.png" alt="">
@@ -54,15 +40,13 @@
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item>
-                    <i class="iconfont icon-gongzuoguanli-huiyiguanli"></i>
-                    <span @click="layoutClick" replace>退出登录</span>
+                    <el-button type="text" @click="layoutClick">退出登录</el-button>
                   </el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
           </div>
         </el-header>
-
         <el-main>
           <el-scrollbar>
             <div class="container_box">
@@ -76,12 +60,11 @@
 </template>
 
 <script lang='ts'>
+import { defineComponent, ref } from 'vue'
 import router from '@/router'
 import $store from '@/store'
-import { defineComponent, ref } from 'vue'
-import { getUserInfo } from '@/utils/token'
 import Cookies from 'js-cookie'
-import { ElMessage } from 'element-plus'
+import { ElMessageBox, ElMessage } from 'element-plus'
 
 export default defineComponent({
   name: 'Layout',
@@ -92,23 +75,10 @@ export default defineComponent({
     },
     breadcrumbList () {
       return router.currentRoute.value.matched.filter((item) => {
-        return item.name && item.name !== '主页'
+        return item.name && item.name !== '工作台'
       })
-    }
-  },
-  setup () {
-    console.log('88888', router.options.routes)
-    const routerList = router.options.routes.filter(item => {
-      item.children = item.children?.filter(child => {
-        return child.name
-      })
-      return item.meta?.isShow
-    })
-    const userInfo = ref({
-      id: '',
-      username: ''
-    })
-    function currentDataName () {
+    },
+    currentDataName () {
       const curHour = new Date().getHours()
       if (curHour <= 8) {
         return '早上'
@@ -120,21 +90,52 @@ export default defineComponent({
         return '晚上'
       }
     }
-    const layoutClick = () => {
-      $store.dispatch('LogOut').then(() => {
-        router.push({ path: '/', replace: true })
-      })
-    }
+  },
+  setup () {
     if (!Cookies.get('ctms-web')) {
       router.push({ path: '/login', replace: true })
       ElMessage.error('登录过期, 请重新登录!')
-    } else {
-      // $store.commit('SET_USER', JSON.parse(getUserInfo()))
-      // userInfo.value = JSON.parse(getUserInfo())
+    }
+    /**
+     * 获取路由配置设置菜单
+     */
+    const routerList = router.options.routes.filter(item => {
+      item.children = item.children?.filter(child => {
+        return child.name
+      })
+      return item.meta?.isShow
+    })
+    /**
+     * 获取用户信息
+     */
+    const userInfo = ref<any>({})
+    $store.commit('getUser')
+    userInfo.value = $store.state.userInfo
+    console.log('userInfo', userInfo)
+
+    /**
+     * 退出登录
+     */
+    const layoutClick = () => {
+      ElMessageBox.confirm('确认退出登录吗?', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        $store.dispatch('LogOut').then(() => {
+          router.push({ path: '/', replace: true })
+          ElMessage({
+            type: 'success',
+            message: '退出登录'
+          })
+        })
+      }).catch(() => {
+        console.log('取消')
+      })
     }
 
     return {
-      userInfo, currentDataName, layoutClick, routerList
+      userInfo, layoutClick, routerList
     }
   }
 })

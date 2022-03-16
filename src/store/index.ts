@@ -1,14 +1,11 @@
 import { createStore } from 'vuex'
 import { login } from '@/api/login'
-import { getToken, setToken, removeToken, setUserInfo, removeUserInfo } from '@/utils/token'
+import { getToken, setToken, removeToken, removeUserInfo } from '@/utils/token'
 
 export default createStore({
   state: {
     token: getToken(),
-    userInfo: {
-      id: '',
-      username: ''
-    },
+    userInfo: {},
     active: 0,
     isSale: false
   },
@@ -27,11 +24,19 @@ export default createStore({
       if (Array.isArray(isSale) && isSale.length > 0) {
         state.isSale = true
       }
+    },
+    setUser: (state, userInfo) => {
+      state.userInfo = userInfo
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+    },
+    getUser: (state) => {
+      if (JSON.stringify(state.userInfo) === '{}') {
+        state.userInfo = JSON.parse(localStorage.getItem('userInfo') || '')
+      }
     }
   },
   actions: {
     Login ({ commit }, userInfo) {
-      console.log('params', userInfo)
       const params = Object.assign({
         client_id: 'ctms-web',
         client_secret: '123456',
@@ -41,11 +46,8 @@ export default createStore({
       }, {})
       return new Promise<void>((resolve, reject) => {
         login(params).then((res) => {
-          console.log('****res****', res)
-          setUserInfo(JSON.stringify(userInfo))
           localStorage.setItem('permission', JSON.stringify([userInfo.username]))
           commit('SET_TOKEN', res.data.data)
-          localStorage.setItem('takenData', JSON.stringify(res.data.data))
           resolve()
         }).catch((error: string) => {
           reject(error)
@@ -56,8 +58,7 @@ export default createStore({
     LogOut ({ commit }) {
       localStorage.setItem('permission', '')
       commit('SET_TOKEN', '')
-      removeUserInfo()
-      // removeToken()
+      removeToken()
     }
   },
   modules: {

@@ -57,6 +57,7 @@ import Cookies from 'js-cookie'
 import { getProjectUndoneList, getAllCollectionPlans, getListUnfinishedProjects } from '@/api/workbench'
 import checkPermission from '@/utils/permission'
 import { page } from '@/utils/page'
+import store from '@/store'
 
 interface typeWorkbench {
   projectId: number
@@ -73,7 +74,10 @@ export default defineComponent({
   components: {},
   setup () {
     const { pageData } = page()
-    const user = Cookies.get('userInfo') ? JSON.parse(Cookies.get('userInfo')) : {}
+    // 获取用户信息
+    store.commit('getUser')
+    const userInfo = store.state.userInfo
+
     const data = reactive({
       loading: false, // 表格加载标识
       loading2: false, // 图表加载标识
