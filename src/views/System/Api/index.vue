@@ -18,7 +18,7 @@
       <el-table-column prop="apiUrl" label="资源地址" />
       <el-table-column prop="apiCategory" label="资源分类">
         <template #default="scope">
-          <span>{{ apiCategory[scope.row.apiCategory].label }}</span>
+          <span>{{ apiCategory[scope.row.apiCategory]?.label }}</span>
         </template>
       </el-table-column>
       <el-table-column prop="createTime" label="创建时间" />

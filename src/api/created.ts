@@ -32,7 +32,7 @@ export function getUserList () {
 // 新增
 export function insertBatchSomeColumn (data: any) {
   return request({
-    url: '/ctms-project/prjProjects/insertBatchSomeColumn',
+    url: '/ctms-project/prjProjects/insertProject',
     method: 'post',
     data: data
   })

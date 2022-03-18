@@ -7,7 +7,8 @@ export default createStore({
     token: getToken(),
     userInfo: {},
     active: 0,
-    isSale: false
+    isSale: false,
+    menu: []
   },
   mutations: {
     SET_TOKEN: (state, tokenData) => {
@@ -25,6 +26,9 @@ export default createStore({
       if (Array.isArray(isSale) && isSale.length > 0) {
         state.isSale = true
       }
+    },
+    setMenu: (state, menu) => {
+      state.menu = menu
     },
     setUser: (state, userInfo) => {
       state.userInfo = userInfo

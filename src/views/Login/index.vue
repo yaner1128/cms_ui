@@ -25,11 +25,12 @@
 
 <script lang='ts'>
 import router from '@/router'
-import Cookies from 'js-cookie'
 import $store from '@/store'
 import { defineComponent, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { loadByUsername } from '@/api/login'
+import { getAllMenuList } from '@/api/menu'
+import Layout from '@/views/Layout/index.vue'
 
 const rules = reactive({
   username: [
@@ -50,6 +51,33 @@ export default defineComponent({
       password: '',
       rememberMe: false
     })
+    const handleRoute = (arr: string | any[], temp: any) => {
+      for (let i = 0; i < arr.length; i++) {
+        if (Array.isArray(arr[i].children) && arr[i].children.length > 0) {
+          temp.push({
+            name: arr[i].permissionName,
+            path: arr[i].permissionUrl,
+            component: () => import(`@/views${arr[i].vueFileUrl}/index.vue`),
+            redirect: '',
+            meta: {
+              isShow: true
+            },
+            children: []
+          })
+          handleRoute(arr[i].children, temp[i].children)
+        } else {
+          temp.push({
+            name: arr[i].permissionName,
+            path: arr[i].permissionUrl,
+            component: () => import(`@/views${arr[i].vueFileUrl}/index.vue`),
+            redirect: '',
+            meta: {
+              isShow: true
+            }
+          })
+        }
+      }
+    }
     // 表单校验
     const refForm = ref()
     const login = () => {
@@ -59,6 +87,7 @@ export default defineComponent({
           // 校验成功
           $store.dispatch('Login', loginForm.value).then(() => {
             loading.value = false
+            // 获取个人信息
             loadByUsername().then(res => {
               $store.commit('setUser', res.data.data)
             })

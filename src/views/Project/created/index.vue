@@ -79,8 +79,9 @@
               drag
               accept="image/*,.pdf"
               action=""
+              :file-list="fileList"
+              :before-remove="beforeRemove"
               :on-change="handleFileChange"
-              :on-remove="handleRemove"
               :auto-upload="false"
             >
               <el-icon class="el-icon--upload"><upload-filled /></el-icon>
@@ -103,13 +104,13 @@
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
 import router from '@/router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { getSelectArea, getSelectParent, getProducts, getUserList, insertBatchSomeColumn } from '@/api/created'
 import { format } from '@/utils/dateFormat'
 import handleFd from '@/utils/formData'
-import store from '@/store'
 import { selectCompanys } from '@/api/company'
+import { removeEnclosure } from '@/api/attLibrary'
 
 const rules = reactive({
   projectName: [
@@ -151,7 +152,6 @@ export default defineComponent({
   name: 'created',
   components: { UploadFilled },
   setup () {
-    const userInfo = ref<any>(store.state.userInfo)
     // 表单
     const form = ref<fromType>({ projectName: '', projectType: '', productId: '', isChecked: '', leaderId: '', saleCount: 0, purchaseCount: 0 })
     // 区域
@@ -164,7 +164,7 @@ export default defineComponent({
     const data = reactive({
       value1: '', // 时间
       value2: '', // 时间
-      file: '', // 附件
+      fileList: ref<any[]>([]),
       areaLevel: 0, // 直辖市code
       dateChange: (code: string, val: any) => { // 日期范围修改方法
         form.value[code] = format(new Date(val), 'yyyy-MM-dd')
@@ -219,11 +219,7 @@ export default defineComponent({
     const onSubmit = () => {
       refForm.value.validate((valid:boolean) => {
         if (valid) {
-          const params = Object.assign({
-            file: data.file,
-            createUser: userInfo.value.employeeId,
-            createTime: format(new Date(), 'yyyy-MM-dd hh:mm:ss')
-          }, form.value)
+          const params = Object.assign({}, form.value)
           const fd = handleFd(params)
           insertBatchSomeColumn(fd).then((res) => {
             if (res.data.code === 200) {
@@ -231,9 +227,12 @@ export default defineComponent({
                 message: '新增成功, 跳转项目列表',
                 type: 'success'
               })
+              data.fileList = []
               setTimeout(() => {
                 router.push({ path: '/project', replace: true })
               }, 1500)
+            } else {
+              ElMessage.warning(res.data.message)
             }
           })
         }
@@ -242,16 +241,34 @@ export default defineComponent({
     // 重置
     const reset = () => {
       form.value = { projectName: '', projectType: '', productId: '', isChecked: '', leaderId: '' }
+      data.fileList = []
     }
     const handleFileChange = (file: any, fileList: any) => {
-      data.file = file.raw
-      // fileData.value = fileList
+      const templist = ref<any[]>([])
+      fileList.forEach((item: { raw: any }) => {
+        if (item.raw) {
+          templist.value.push(item.raw)
+        }
+      })
+      form.value.file = templist
     }
-    const handleRemove = (file: any, fileList: any) => {
-      // fileData.value = fileList
+    const beforeRemove = (file: any, fileList: any) => {
+      ElMessageBox.confirm('确认删除该附件吗?', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        removeEnclosure(file.attachmentId).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('删除附件成功!')
+          }
+        })
+      }).catch(() => {
+        fileList.push(file)
+      })
     }
     return {
-      rules, ...resData, areaList, parentList, ownerList, productList, companyList, form, refForm, changeType, onSubmit, reset, handleFileChange, handleRemove
+      rules, ...resData, areaList, parentList, ownerList, productList, companyList, form, refForm, changeType, onSubmit, reset, handleFileChange, beforeRemove
     }
   }
 })

@@ -19,11 +19,19 @@
           <span v-else></span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" fixed="right">
+      <el-table-column prop="amount" label="附件">
+        <template #default="scope">
+          <ul>
+            <li class="fileItem" v-for="item in scope.row.basAttachments" :key="item">
+              <span class="fileItem" @click="exportClick(item.attachUrl)">{{ item.attachmentName }}</span>
+            </li>
+          </ul>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" v-if="isEdit">
         <template #default="scope">
           <el-button type="text" size="small" v-show="isEdit" @click="editClick(scope.row)">编辑</el-button>
-          <!-- <el-button type="text" size="small" @click="upLoadView(scope.row.basAttachments)">附件</el-button> -->
-          <el-popconfirm title="确认删除本条数据吗？">
+          <el-popconfirm title="确认删除本条数据吗？" @confirm="deleteClick(scope.row.contractId)">
             <template #reference>
               <el-button type="text" size="small" v-show="isEdit">删除</el-button>
             </template>
@@ -32,21 +40,21 @@
       </el-table-column>
     </el-table>
     <el-dialog v-model="editDialog" :title="curentTitle" width="600px">
-      <el-form :model="editForm" class="demo-form-inline" label-width="80px">
-        <el-form-item label="合同编号">
+      <el-form ref="refForm" :model="editForm" :rules="rules" :inline-message="true" class="demo-form-inline" label-width="80px">
+        <el-form-item label="合同编号" prop="contractCode">
           <el-input v-model="editForm.contractCode" placeholder="请输入合同编号"></el-input>
         </el-form-item>
-        <el-form-item label="合同名称">
+        <el-form-item label="合同名称" prop="contractName">
           <el-input v-model="editForm.contractName" placeholder="请输入合同名称"></el-input>
         </el-form-item>
-        <el-form-item label="金额">
+        <el-form-item label="金额" prop="amount">
           <el-input v-model="editForm.amount" placeholder="请输入合同金额"></el-input>
         </el-form-item>
-        <el-form-item label="签订日期">
+        <el-form-item label="签订日期" prop="signDate">
           <el-date-picker v-model="editForm.signDate" type="date" placeholder="请选择合同签订日期" @change="changeDate($event)"></el-date-picker>
         </el-form-item>
-        <el-form-item label="责任人">
-          <el-select v-model="editForm.leaderId" placeholder="请选择状态">
+        <el-form-item label="责任人" prop="leaderId">
+          <el-select v-model="editForm.leaderId" placeholder="请选择责任人">
             <el-option v-for="(item,index) in ownerList" :key="index" :label="item.employeeName" :value="item.employeeId"></el-option>
           </el-select>
         </el-form-item>
@@ -62,10 +70,10 @@
           class="upload-demo"
           ref="uploadRef"
           accept="image/*,.pdf"
-          :limit="1"
           action=""
+          :file-list="fileList"
           :on-change="handleFileChange"
-          :on-remove="handleRemove"
+          :before-remove="beforeRemove"
           :auto-upload="false"
           >
           <el-button type="text">上传附件</el-button>
@@ -83,13 +91,21 @@
 <script lang='ts'>
 import router from '@/router'
 import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue'
-import { ElMessage } from 'element-plus'
-import myUpLoad from '@/components/upload.vue'
-import { addSale, updateSale } from '@/api/saleApi'
-import { getContractsByStatus } from '@/api/details'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { format } from '@/utils/dateFormat'
+import { addSale, updateSale, deleteSale } from '@/api/saleApi'
+import { getContractsByStatus } from '@/api/details'
 import { getUserList } from '@/api/created'
+import handleFd from '@/utils/formData'
+import store from '@/store'
+import { removeEnclosure } from '@/api/attLibrary'
 
+const rules = reactive({
+  contractCode: [{ required: true, message: '请输入合同编码', trigger: 'blur' }],
+  contractName: [{ required: true, message: '请输入合同名称', trigger: 'blur' }],
+  signDate: [{ required: true, message: '请选择所售产品', trigger: 'change' }],
+  leaderId: [{ required: true, message: '请选择责任人', trigger: 'change' }]
+})
 interface purchaseDataType {
   amount: string;
   contractId: number;
@@ -101,6 +117,7 @@ interface purchaseDataType {
 export default defineComponent({
   name: 'purchase',
   setup () {
+    const userInfo = ref<any>(store.state.userInfo)
     // 判断是否带参数
     const query = reactive({
       isEdit: router.currentRoute.value.query.flag !== 'false',
@@ -108,40 +125,43 @@ export default defineComponent({
       curentTitle: '新增',
       editDialog: false,
       file: '', // 附件
+      fileList: ref<any[]>([]),
+      exportClick: (attachUrl: string) => {
+        const url = `/file/downloadFile?savePath=${attachUrl}`
+        const iframe = document.createElement('iframe')
+        iframe.src = url
+        iframe.style.display = 'none'
+        document.body.appendChild(iframe)
+      },
       changeDate: (val: any) => {
         editForm.value.signDate = format(new Date(val), 'yyyy-MM-dd')
       },
       addClick: () => {
         query.curentTitle = '新增'
-        editForm.value = { amount: '', contractId: 0, contractName: '', status: '', signDate: '' }
+        editForm.value = { contractType: '0', amount: '', contractId: 0, contractName: '', status: '', signDate: '' }
         query.editDialog = true
       },
       editClick: (row: purchaseDataType) => {
-        console.log(row)
-        editForm.value = row
+        editForm.value = JSON.parse(JSON.stringify(row))
+        query.fileList = []
+        delete editForm.value.basAttachments
+        row.basAttachments.forEach((item: { attachmentName: string; attachUrl: string; attachmentId: number }) => {
+          query.fileList.push({
+            name: item.attachmentName,
+            url: item.attachUrl,
+            attachmentId: item.attachmentId
+          })
+        })
         query.curentTitle = '编辑'
         query.editDialog = true
       },
-      commitEditClick: () => {
-        query.editDialog = false
-        const params = Object.assign({ projectId: query.id, contractType: '0', file: query.file, leaderId: 1 }, editForm.value)
-        const fd = new FormData()
-        for (var key in params) {
-          fd.append(key, params[key])
-        }
-        console.log(params)
-        console.log('file', fd.get('file'))
-        if (query.curentTitle === '新增') {
-          addSale(fd).then(res => {
-            query.file = ''
-            if (res.data.code === 200) {
-              ElMessage.success('新增成功!')
-              getData()
-            }
-          })
-        } else {
-          updateSale(fd).then()
-        }
+      deleteClick: (contractId: number) => {
+        deleteSale(contractId).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('删除成功!')
+            getData()
+          }
+        })
       },
       filterTag: (value: string, row: purchaseDataType) => { // 过滤
         return row.status === value
@@ -157,10 +177,57 @@ export default defineComponent({
         purchaseData.value = res.data.data.records
       })
     }
+    /**
+     * 获取责任人列表
+     */
     const ownerList = ref<any[]>([])
     getUserList().then(res => {
       ownerList.value = res.data.data
     })
+    /**
+     * 表单验证提交
+     */
+    const refForm = ref()
+    const commitEditClick = () => {
+      refForm.value.validate((valid:boolean) => {
+        if (valid) {
+          query.editDialog = false
+          if (query.curentTitle === '新增') {
+            const params = Object.assign({
+              projectId: query.id,
+              contractType: '0',
+              file: query.file,
+              createUser: userInfo.value.employeeId,
+              createTime: format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+            }, editForm.value)
+            addSale(handleFd(params)).then(res => {
+              query.file = ''
+              if (res.data.code === 200) {
+                ElMessage.success('新增成功!')
+                getData()
+              }
+            })
+          } else {
+            const params = Object.assign({
+              projectId: query.id,
+              contractType: '0',
+              file: query.file,
+              updateUser: userInfo.value.employeeId,
+              updateTime: format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+            }, editForm.value)
+            updateSale(handleFd(params)).then(res => {
+              if (res.data.code === 200) {
+                ElMessage.success('新增成功!')
+                getData()
+              }
+            })
+          }
+        }
+      })
+    }
+    /**
+     * 判断是否存在项目id
+     */
     onMounted(() => {
       if (query && query.id) {
         getData()
@@ -173,15 +240,32 @@ export default defineComponent({
     })
     // 附件上传
     const handleFileChange = (file: any, fileList: any) => {
-      query.file = file.raw
-      // detailObj.value.basAttachments = fileList[0].raw
+      const templist = ref<any[]>([])
+      fileList.forEach((item: { raw: any }) => {
+        if (item.raw) {
+          templist.value.push(item.raw)
+        }
+      })
+      editForm.value.file = templist
     }
-    const handleRemove = (file: any, fileList: any) => {
-      console.log(file)
+    const beforeRemove = (file: any, fileList: any) => {
+      ElMessageBox.confirm('确认删除该附件吗?', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        removeEnclosure(file.attachmentId).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('删除附件成功!')
+          }
+        })
+      }).catch(() => {
+        fileList.push(file)
+      })
     }
 
     return {
-      ...resData, purchaseData, editForm, ownerList, handleFileChange, handleRemove
+      rules, ...resData, purchaseData, editForm, ownerList, refForm, commitEditClick, handleFileChange, beforeRemove
     }
   }
 })
@@ -190,5 +274,9 @@ export default defineComponent({
 /deep/.buttonList .el-form-item__content{
   display: flex;
   justify-content: flex-end;
+}
+.fileItem{
+  cursor: pointer;
+  color: rgb(64, 158, 255);
 }
 </style>

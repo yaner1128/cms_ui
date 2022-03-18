@@ -86,36 +86,16 @@
             <span>验收日期</span>：
             <el-date-picker v-model="detailObj.checkDate" type="date" placeholder="请选择验收日期" :disabled="!isEdit" @change="dateChange($event,'checkDate')"></el-date-picker>
           </li>
-          <li style="width: 100%">
+          <li style="width: 100%; height: auto;">
             <span>项目附件</span>：
-            <!-- <span class="itemFile" @click="fileClick">附件</span> -->
-            <ul id="fileBox" v-if="detailObj.basAttachments">
-              <li v-for="item in detailObj.basAttachments" :key="item">
-                <span class="itemFile" @click="exportClick(item.attachUrl)">{{ item.attachmentName || '附件名称'}}</span>
-                <el-upload v-show="isEdit"
-                  class="upload-demo"
-                  ref="uploadRef"
-                  accept="image/*,.pdf"
-                  :limit="1"
-                  action=""
-                  :on-change="handleFileChange"
-                  :on-remove="handleRemove"
-                  :auto-upload="false"
-                  >
-                  <el-button type="text">更新附件 </el-button>
-                </el-upload>
-                <el-button v-show="isEdit" type="text" @click="deleteClick(item.attachmentId)">删除</el-button>
-              </li>
-            </ul>
-            <el-upload v-else
-              v-show="isEdit"
+            <el-upload
               class="upload-demo"
               ref="uploadRef"
               accept="image/*,.pdf"
-              :limit="1"
               action=""
+              :file-list="fileList"
               :on-change="handleFileChange"
-              :on-remove="handleRemove"
+              :before-remove="beforeRemove"
               :auto-upload="false"
               >
               <el-button type="text">上传附件</el-button>
@@ -151,7 +131,7 @@ import { defineComponent, onMounted, ref, nextTick, reactive, toRefs } from 'vue
 import { getDetails, updateDetails, getProjectOverview } from '@/api/details'
 import { getProducts, getUserList } from '@/api/created'
 import router from '@/router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import myPurchase from './modules/purchase.vue'
 import mySales from './modules/sales.vue'
 import myPaymentPlan from './modules/paymentPlan.vue'
@@ -186,9 +166,8 @@ export default defineComponent({
   },
   setup () {
     const data = reactive({
+      fileList: ref<any[]>([]),
       exportClick: (attachUrl: string) => {
-        // eslint-disable-next-line no-debugger
-        debugger
         const url = `/file/downloadFile?savePath=${attachUrl}`
         const iframe = document.createElement('iframe')
         // iframe.Authorization = 'Bearer ' + localStorage.getItem('token')
@@ -202,11 +181,6 @@ export default defineComponent({
             ElMessage.warning('附件删除成功 !')
           }
         })
-      },
-      fileClick: () => {
-        data.dialogTableVisible = true
-        fileList.value = detailObj.value.basAttachments
-        console.log(fileList.value)
       },
       dateChange: (val: any, code: string) => {
         detailObj.value[code] = format(new Date(val), 'yyyy-MM-dd')
@@ -222,13 +196,7 @@ export default defineComponent({
     const detailObj = ref<{ [propname: string]: any }>({ projectName: '', contractSignDate: '', projectType: '', leaderId: '', isBidding: '', winBiddingDate: '', purchaseAmount: '', saleAmount: '', productId: '', isChecked: '' })
     // 步骤条数据
     const stepList = ref<stepListType[]>([])
-    // 附件操作
-    const fileList = ref<fileType[]>([])
-    const fileListClick = () => {
-      fileList.value = []
-      data.dialogTableVisible = true
-      // fileList.value = detailObj.value.fileList
-    }
+
     const detaileVo = ref<any>({})
     const planList = ref<any>([])
     // 调用接口获取详情数据
@@ -236,6 +204,13 @@ export default defineComponent({
       const params = Object.assign({}, query)
       getDetails(params).then(res => {
         detailObj.value = res.data.data
+        res.data.data.basAttachments.forEach((item: { attachmentName: string; attachUrl: string; attachmentId: number }) => {
+          data.fileList.push({
+            name: item.attachmentName,
+            url: item.attachUrl,
+            attachmentId: item.attachmentId
+          })
+        })
       })
       const promise1 = getUserList()
       const promise2 = getProducts()
@@ -271,26 +246,50 @@ export default defineComponent({
       isEdit.value = false
       console.log(detailObj.value)
       updateDetails(detailObj.value).then(res => {
-        console.log('//////', res.data)
+        if (res.data.code === 200) {
+          ElMessage.success('编辑成功')
+        }
       })
     }
     // 附件
     // 附件上传
     const handleFileChange = (file: any, fileList: any) => {
-      detailObj.value.basAttachments = fileList[0].raw
+      const templist = ref<any[]>([])
+      fileList.forEach((item: { raw: any }) => {
+        if (item.raw) {
+          templist.value.push(item.raw)
+        }
+      })
+      detailObj.value.file = templist.value
     }
-    const handleRemove = (file: any, fileList: any) => {
-      detailObj.value.basAttachments = fileList[0].raw || []
+    const beforeRemove = (file: any, fileList: any) => {
+      ElMessageBox.confirm('确认删除该附件吗?', '提示', {
+        confirmButtonText: '确认',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        removeEnclosure(file.attachmentId).then(res => {
+          if (res.data.code === 200) {
+            ElMessage.success('删除附件成功!')
+          }
+        })
+      }).catch(() => {
+        fileList.push(file)
+      })
     }
 
     return {
-      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, fileList, fileListClick, handleFileChange, handleRemove
+      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, handleFileChange, beforeRemove
     }
   }
 })
 </script>
 
 <style lang="scss" scoped>
+/deep/ .detailContent .upload-demo{
+  display: flex;
+  align-items: center;
+}
 /deep/ .el-input{
   width: 240px;
 }

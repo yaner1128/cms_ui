@@ -9,10 +9,17 @@ export function addSale (data: any) {
   })
 }
 // 修改
-export function updateSale (params: any) {
+export function updateSale (data: any) {
   return request({
     url: '/ctms-project/prjContracts/update',
     method: 'post',
-    params
+    data
+  })
+}
+// 删除
+export function deleteSale (contractId: number) {
+  return request({
+    url: '/ctms-project/prjContracts/delete?id=' + contractId,
+    method: 'post'
   })
 }

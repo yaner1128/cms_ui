@@ -22,13 +22,16 @@
           <i class="iconfont" :class="'icon-'+scope.row.permissionIcon" style="font-size:25px"></i>
         </template>
       </el-table-column>
-      <el-table-column prop="permissionId" label="排序" width="60px">
+      <el-table-column prop="menuSorting" label="排序" width="60px">
         <template #default="scope">
-          <el-tag>{{ scope.parentId||1 }}</el-tag>
+          <el-tag v-if="scope.row.menuSorting">{{ scope.row.menuSorting }}</el-tag>
+          <span v-else></span>
         </template>
       </el-table-column>
-      <el-table-column prop="path" label="模块" />
-      <el-table-column prop="permissionUrl" label="组件路径" />
+      <el-table-column prop="moduleName" label="模块" />
+      <el-table-column prop="permissionUrl" label="路径" />
+      <el-table-column prop="jumpUrl" label="重定向" />
+      <el-table-column prop="vueFileUrl" label="vue文件路径" />
       <el-table-column prop="createdDate" label="创建日期" />
       <el-table-column fixed="right" label="操作">
         <template #default="scope">
@@ -42,7 +45,7 @@
       </el-table-column>
     </el-table>
     <el-dialog v-model="dialogFormVisible" :title="curTitle" width="580px">
-      <el-form ref="refForm" :model="form" label-width="80px" :rules="rules">
+      <el-form ref="refForm" :model="form" label-width="100px" :rules="rules">
         <el-form-item label="父级菜单" prop="parentId">
           <el-cascader v-model="parentId"
             @change="changePermission($event)"
@@ -69,14 +72,20 @@
         <el-form-item label="菜单名称" prop="permissionName">
           <el-input v-model="form.permissionName" clearable></el-input>
         </el-form-item>
-        <el-form-item label="菜单排序">
-          <el-input-number controls-position="right" :min="1"></el-input-number>
-        </el-form-item>
         <el-form-item label="模块">
-          <el-input v-model="form.permissionName" clearable></el-input>
+          <el-input v-model="form.moduleName" clearable></el-input>
         </el-form-item>
-        <el-form-item label="组件路径" prop="permissionUrl">
+        <el-form-item label="vue文件路径">
+          <el-input v-model="form.vueFileUrl" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="菜单url" prop="permissionUrl">
           <el-input v-model="form.permissionUrl" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="重定向" prop="permissionUrl">
+          <el-input v-model="form.jumpUrl" clearable></el-input>
+        </el-form-item>
+        <el-form-item label="菜单排序">
+          <el-input-number v-model="form.menuSorting" controls-position="right" :min="1"></el-input-number>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -93,7 +102,6 @@
 import { defineComponent, ref, reactive, toRefs } from 'vue'
 import iconList from './module/iconData'
 import { getAllMenuList, permissionAdd, permissionUpdate, permissionDelete } from '@/api/menu'
-import { format } from '@/utils/dateFormat'
 import { ElMessage } from 'element-plus'
 
 const rules = reactive({
@@ -102,9 +110,6 @@ const rules = reactive({
   ],
   permissionName: [
     { required: true, message: '请输入标题', trigger: 'blur' }
-  ],
-  permissionUrl: [
-    { required: true, message: '请输入路径', trigger: 'blur' }
   ]
 })
 interface formType {
@@ -113,6 +118,10 @@ interface formType {
   permissionIcon: string;
   permissionUrl: string;
   createTime?: string;
+  moduleName: string;
+  vueFileUrl: string;
+  jumpUrl: string;
+  menuSorting: string;
 }
 export default defineComponent({
   name: 'depart',
@@ -136,7 +145,7 @@ export default defineComponent({
       add: () => { // 新增
         data.dialogFormVisible = true
         data.curTitle = '新增'
-        form.value = { parentId: 0, permissionName: '', permissionIcon: '', permissionUrl: '' }
+        form.value = { parentId: 0, permissionName: '', permissionIcon: '', permissionUrl: '', moduleName: '', vueFileUrl: '', jumpUrl: '', menuSorting: '' }
       },
       editClick: (row: any) => { // 编辑
         data.dialogFormVisible = true
@@ -155,12 +164,7 @@ export default defineComponent({
       }
     })
     const resData = toRefs(data)
-    const form = ref<formType>({
-      parentId: 0,
-      permissionName: '',
-      permissionIcon: '',
-      permissionUrl: ''
-    })
+    const form = ref<formType>({ parentId: 0, permissionName: '', permissionIcon: '', permissionUrl: '', moduleName: '', vueFileUrl: '', jumpUrl: '', menuSorting: '' })
     // 表格数据
     const tableData = ref<any[]>([])
     const selectData = ref<any[]>([])
@@ -179,7 +183,6 @@ export default defineComponent({
         if (valid) {
           if (data.curTitle === '新增') {
             console.log(form.value)
-            // form.value.createTime = format(new Date(), 'yyyy-MM-dd')
             permissionAdd(form.value).then(res => {
               if (res.data.code === 200) {
                 ElMessage.success('新增菜单成功！')

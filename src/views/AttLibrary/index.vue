@@ -117,7 +117,7 @@
 import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { UploadFilled } from '@element-plus/icons-vue'
 import { ElMessage, ElUpload } from 'element-plus'
-import { getAttLibrary, addEnclosure, deleteEnclosure } from '@/api/attLibrary'
+import { getAttLibrary } from '@/api/attLibrary'
 import { format } from '@/utils/dateFormat'
 import checkPermission from '@/utils/permission'
 import { page } from '@/utils/page'

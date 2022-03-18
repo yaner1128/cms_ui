@@ -10,7 +10,7 @@ export function queryResourceAddress () {
 // 新增
 export function addInterface (params: any) {
   return request({
-    url: '/resources/addInterface',
+    url: '/ctms-user/resources/addInterface',
     method: 'post',
     params
   })
@@ -18,7 +18,7 @@ export function addInterface (params: any) {
 // 修改信息
 export function updateInterface (params: any) {
   return request({
-    url: '/resources/modifyApiResourceInformation',
+    url: '/ctms-user/resources/updateApiResource',
     method: 'post',
     params
   })
@@ -26,7 +26,7 @@ export function updateInterface (params: any) {
 // 删除
 export function deleteInterface (apiId: number) {
   return request({
-    url: '/resources/deleteApiResourceInformation?apiId=' + apiId,
+    url: '/ctms-user/resources/deleteApiResource?apiId=' + apiId,
     method: 'post'
   })
 }

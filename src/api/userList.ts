@@ -18,7 +18,7 @@ export function addUserInformation (params: any) {
 // 修改
 export function updataUserInfo (params: any) {
   return request({
-    url: '/ctms-user/staff/modifyBasicUserInformation',
+    url: '/ctms-user/staff/updateInformation',
     method: 'post',
     params
   })
@@ -26,7 +26,7 @@ export function updataUserInfo (params: any) {
 // 删除
 export function deleteUserInformation (employeeId: number) {
   return request({
-    url: `/ctms-user/staff/deleteUserInformation?employeeId=${employeeId}`,
+    url: `/ctms-user/staff/deleteUserById?employeeId=${employeeId}`,
     method: 'post'
   })
 }
@@ -40,7 +40,7 @@ export function queryAllDepartmentNames () {
 // 获取职位
 export function getJobByDepartId (depId: number) {
   return request({
-    url: '/ctms-user/positions/queryByPositionID?depId=' + depId,
+    url: '/ctms-user/positions/queryByPositionId?depId=' + depId,
     method: 'post'
   })
 }
