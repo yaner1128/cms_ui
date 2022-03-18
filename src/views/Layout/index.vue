@@ -99,73 +99,22 @@ export default defineComponent({
       router.push({ path: '/login', replace: true })
       ElMessage.error('登录过期, 请重新登录!')
     }
-    const handleRoute = (arr: string | any[], temp: any) => {
-      for (let i = 0; i < arr.length; i++) {
-        if (Array.isArray(arr[i].children) && arr[i].children.length > 0) {
-          temp.push({
-            name: arr[i].permissionName,
-            path: arr[i].permissionUrl,
-            component: () => import(`@/views${arr[i].vueFileUrl}/index.vue`),
-            redirect: '',
-            meta: {
-              isShow: true
-            },
-            children: []
-          })
-          handleRoute(arr[i].children, temp[i].children)
-        } else {
-          temp.push({
-            name: arr[i].permissionName,
-            path: arr[i].permissionUrl,
-            component: () => import(`@/views${arr[i].vueFileUrl}/index.vue`),
-            redirect: '',
-            meta: {
-              isShow: true
-            }
-          })
-        }
-      }
-    }
-    /**
-     * 获取路由配置设置菜单
-     */
-    const routerList = ref<any[]>([])
-    const getData: any = async () => {
-      let temp: any[] = []
-      await getAllMenuList('').then(res => {
-        temp = []
-        handleRoute(res.data.data, temp)
-      })
-      for (var i = 0; i < temp.length; i++) {
-        if (temp[i].children) {
-          const name = temp[i].name
-          router.addRoute({ name: temp[i].name, path: temp[i].path, component: Layout })
-          temp[i].children.forEach((item: RouteRecordRaw) => {
-            router.addRoute(name, item)
-          })
-        } else {
-          router.addRoute(temp[i])
-        }
-      }
-      console.log('temp', temp)
-      localStorage.setItem('meueData', JSON.stringify(temp))
-
-      const meueData = router.options.routes.concat(JSON.parse(localStorage.getItem('meueData') || ''))
-      routerList.value = meueData.filter((item) => {
-        item.children = item.children?.filter(child => {
-          return child.name
-        })
-        return item.meta?.isShow
-      })
-    }
-    getData()
-
     /**
      * 获取用户信息
      */
     const userInfo = ref<any>({})
     $store.commit('getUser')
     userInfo.value = $store.state.userInfo
+    /**
+     * 获取路由配置设置菜单
+     */
+    const meueData = router.options.routes.concat($store.state.temp)
+    const routerList = meueData.filter((item) => {
+      item.children = item.children?.filter(child => {
+        return child.name && child.meta?.isShow
+      })
+      return item.meta?.isShow
+    })
     /**
      * 退出登录
      */

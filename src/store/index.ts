@@ -8,7 +8,8 @@ export default createStore({
     userInfo: {},
     active: 0,
     isSale: false,
-    menu: []
+    menu: [],
+    temp: []
   },
   mutations: {
     SET_TOKEN: (state, tokenData) => {
@@ -27,9 +28,6 @@ export default createStore({
         state.isSale = true
       }
     },
-    setMenu: (state, menu) => {
-      state.menu = menu
-    },
     setUser: (state, userInfo) => {
       state.userInfo = userInfo
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
@@ -38,6 +36,16 @@ export default createStore({
       if (JSON.stringify(state.userInfo) === '{}') {
         state.userInfo = JSON.parse(localStorage.getItem('userInfo') || '')
       }
+    },
+    setMenu: (state, menu: never[]) => {
+      if (Array.isArray(menu) && menu.length > 0) {
+        state.menu = menu
+      } else {
+        state.menu = JSON.parse(localStorage.getItem('menu') || '')
+      }
+    },
+    setTemp: (state, temp) => {
+      state.temp = temp
     }
   },
   actions: {
