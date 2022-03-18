@@ -91,10 +91,10 @@ export default defineComponent({
             // 获取个人信息
             loadByUsername().then(res => {
               $store.commit('setUser', res.data.data)
-            })
-            getAllMenuList('').then(res => {
-              $store.commit('setMenu', res.data.data)
-              localStorage.setItem('menu', JSON.stringify(res.data.data))
+
+              const data = res.data.data.positionsVOList[0].permissionsVo
+              $store.commit('setMenu', data)
+              localStorage.setItem('menu', JSON.stringify(data))
               const handleRoueEvent = () => {
                 $store.commit('setMenu', $store.state.menu)
                 const temp: any[] = []
@@ -116,6 +116,8 @@ export default defineComponent({
               }
               router.push({ path: '/home', replace: true })
             })
+            // getAllMenuList('').then(res => {
+            // })
           }).catch(() => {
             loading.value = false
             ElMessage.error('请输入正确的用户名/密码！')

@@ -31,3 +31,10 @@ export function positionsRemove (positionId: number) {
     method: 'post'
   })
 }
+export function permissionsById (data: any) {
+  return request({
+    url: '/ctms-user/basPosPermission/permissionsById',
+    method: 'post',
+    data
+  })
+}

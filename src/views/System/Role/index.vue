@@ -93,11 +93,10 @@
         <div class="right">
           <div class="title">
             <span>接口权限</span>
-            <el-button type="primary" size="small" @click="saveClick">保存</el-button>
+            <el-button type="primary" size="small">保存</el-button>
           </div>
           <div class="box">
             <el-tree
-              ref="menuRef"
               @check="isMeueSave=true"
               :default-expand-all="false"
               :data="treeData2"
@@ -119,7 +118,7 @@
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { queryAllDepartmentNames } from '@/api/userList'
-import { positionsAll, positionsAdd, positionsUpdate, positionsRemove } from '@/api/role'
+import { positionsAll, positionsAdd, positionsUpdate, positionsRemove, permissionsById } from '@/api/role'
 import { getAllMenuList } from '@/api/menu'
 import { queryResourceAddress } from '@/api/apiData'
 import { page } from '@/utils/page'
@@ -146,6 +145,7 @@ export default defineComponent({
       loading: false, // 表格加载
       isSave: false, // 是否显示保存按钮
       isMeueSave: false,
+      positionId: ref<any>(''),
       curTitle: '新增',
       dialogFormVisible: false,
       permissionBox: false,
@@ -240,14 +240,24 @@ export default defineComponent({
     // 权限设置
     const permissionClick = (row: any) => {
       data.permissionBox = true
-      console.log(row)
-      //   defaultKey.value = ['工作台', '项目列表']
+      data.positionId = row.positionId
+      row.permissions.forEach((item: { permissionId: string }) => {
+        defaultKey.value.push(item.permissionId)
+      })
     }
     // 菜单默认选择的项
     const defaultKey = ref(['工作台'])
     // 菜单权限保存
     const menuRef = ref()
     const saveClick = () => {
+      const params: any = []
+      menuRef.value!.getCheckedKeys(false).forEach((item: any) => {
+        const obj = { permissionId: item, posId: data.positionId }
+        params.push(obj)
+      })
+      permissionsById({ basPosPermissionList: params }).then(res => {
+        console.log(res)
+      })
       setTimeout(() => {
         data.isMeueSave = false
       }, 1000)
