@@ -93,14 +93,15 @@
         <div class="right">
           <div class="title">
             <span>接口权限</span>
-            <el-button type="primary" size="small">保存</el-button>
+            <el-button type="primary" size="small" @click="saveClick2">保存</el-button>
           </div>
           <div class="box">
             <el-tree
+              ref="apiRef"
               @check="isMeueSave=true"
               :default-expand-all="false"
               :data="treeData2"
-              :default-checked-keys="defaultKey"
+              :default-checked-keys="apiIdDefaultKey"
               :props="{
                 children: 'children',
                 label: 'apiDesc',
@@ -118,7 +119,7 @@
 <script lang='ts'>
 import { defineComponent, reactive, ref, toRefs } from 'vue'
 import { queryAllDepartmentNames } from '@/api/userList'
-import { positionsAll, positionsAdd, positionsUpdate, positionsRemove, permissionsById } from '@/api/role'
+import { positionsAll, positionsAdd, positionsUpdate, positionsRemove, permissionsById, assignedByPositionApi } from '@/api/role'
 import { getAllMenuList } from '@/api/menu'
 import { queryResourceAddress } from '@/api/apiData'
 import { page } from '@/utils/page'
@@ -239,14 +240,23 @@ export default defineComponent({
     const createForm = ref<any>({ positionName: '', positionLevel: '', permission: '', level: 0, desc: '', createDate: '' })
     // 权限设置
     const permissionClick = (row: any) => {
+      defaultKey.value = []
+      apiIdDefaultKey.value = []
+      console.log(row)
+      treeData.value = [...treeData.value]
       data.permissionBox = true
       data.positionId = row.positionId
       row.permissions.forEach((item: { permissionId: string }) => {
         defaultKey.value.push(item.permissionId)
       })
+      row.apis.forEach((item: { apiId: string }) => {
+        apiIdDefaultKey.value.push(item.apiId)
+      })
+      console.log(defaultKey.value)
+      console.log(apiIdDefaultKey.value)
     }
     // 菜单默认选择的项
-    const defaultKey = ref(['工作台'])
+    const defaultKey = ref([''])
     // 菜单权限保存
     const menuRef = ref()
     const saveClick = () => {
@@ -256,15 +266,28 @@ export default defineComponent({
         params.push(obj)
       })
       permissionsById({ basPosPermissionList: params }).then(res => {
-        console.log(res)
+        if (res.data.code === 200) {
+          ElMessage.success('编辑成功')
+        }
       })
-      setTimeout(() => {
-        data.isMeueSave = false
-      }, 1000)
+    }
+    const apiIdDefaultKey = ref([''])
+    const apiRef = ref()
+    const saveClick2 = () => {
+      const params: any = []
+      apiRef.value!.getCheckedKeys(false).forEach((item: any) => {
+        const obj = { apiId: item, posId: data.positionId }
+        params.push(obj)
+      })
+      assignedByPositionApi({ basPosApisList: params }).then(res => {
+        if (res.data.code === 200) {
+          ElMessage.success('编辑成功')
+        }
+      })
     }
     // 接口权限
     return {
-      ...pageData, rules, ...resData, roleData, formInline, departAll, createForm, defaultKey, treeData, treeData2, saveClick, menuRef, permissionClick
+      ...pageData, rules, ...resData, roleData, formInline, departAll, createForm, defaultKey, apiIdDefaultKey, treeData, treeData2, saveClick, menuRef, permissionClick, saveClick2, apiRef
     }
   }
 })

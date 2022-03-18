@@ -31,6 +31,15 @@ export function positionsRemove (positionId: number) {
     method: 'post'
   })
 }
+// api
+export function assignedByPositionApi (data: any) {
+  return request({
+    url: '/ctms-user/resources/assignedByPositionApi',
+    method: 'post',
+    data
+  })
+}
+// 菜单
 export function permissionsById (data: any) {
   return request({
     url: '/ctms-user/basPosPermission/permissionsById',

@@ -1,5 +1,5 @@
 function exportClick (attachUrl: string) {
-  const url = `/file/downloadFile?savePath=${attachUrl}`
+  const url = `/ctms-user/file/downloadFile?savePath=${attachUrl}`
   const iframe = document.createElement('iframe')
   iframe.src = url
   iframe.style.display = 'none'

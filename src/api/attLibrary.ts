@@ -13,3 +13,9 @@ export function removeEnclosure (attachmentId: number) {
     method: 'post'
   })
 }
+export function downloadFile (attachUrl: string) {
+  return request({
+    url: `/ctms-user/file/downloadFile?savePath=${attachUrl}`,
+    method: 'get'
+  })
+}
