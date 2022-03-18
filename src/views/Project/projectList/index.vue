@@ -6,7 +6,7 @@
         <el-input v-model="formInline.projectName" clearable placeholder="请输入项目名称"></el-input>
       </el-form-item>
       <el-form-item>
-        <el-select v-model="formInline.inStatus" clearable placeholder="请选择状态">
+        <el-select v-model="formInline.status" clearable placeholder="请选择状态">
           <el-option label="已废止" :value="0"></el-option>
           <el-option label="待付款" :value="1"></el-option>
           <el-option label="进行中" :value="2"></el-option>
@@ -82,7 +82,7 @@ import { page } from '@/utils/page'
 // 筛选条件数据类型
 interface queryType {
   projectName: string
-  inStatus: number|string
+  status: number|string
   startTime: string
   endTime: string
   productName: string
@@ -107,14 +107,19 @@ export default defineComponent({
       loading: false, // 表格加载
       value1: '', // 时间
       dateChange: (val: any) => { // 日期范围修改方法
-        formInline.value.startTime = format(new Date(val[0]), 'yyyy-MM-dd')
-        formInline.value.endTime = format(new Date(val[1]), 'yyyy-MM-dd')
+        if (val) {
+          formInline.value.startTime = format(new Date(val[0]), 'yyyy-MM-dd')
+          formInline.value.endTime = format(new Date(val[1]), 'yyyy-MM-dd')
+        } else {
+          formInline.value.startTime = ''
+          formInline.value.endTime = ''
+        }
       },
       search: () => { // 搜索查询
         getData()
       },
       reset: () => { // 重置
-        formInline.value = { projectName: '', inStatus: '', startTime: '', endTime: '', productName: '', employeeName: '' }
+        formInline.value = { projectName: '', status: '', startTime: '', endTime: '', productName: '', employeeName: '' }
         data.value1 = ''
         getData()
       },
@@ -130,7 +135,7 @@ export default defineComponent({
     })
     const resData = toRefs(data)
     // 定义查询表单
-    const formInline = ref<queryType>({ projectName: '', inStatus: '', startTime: '', endTime: '', productName: '', employeeName: '' })
+    const formInline = ref<queryType>({ projectName: '', status: '', startTime: '', endTime: '', productName: '', employeeName: '' })
     // 定义表格数据
     const tableData = ref<rowType[]>([])
     tableData.value = [{

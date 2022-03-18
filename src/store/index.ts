@@ -40,7 +40,7 @@ export default createStore({
     setMenu: (state, menu: never[]) => {
       if (Array.isArray(menu) && menu.length > 0) {
         state.menu = menu
-      } else {
+      } else if (localStorage.getItem('menu')) {
         state.menu = JSON.parse(localStorage.getItem('menu') || '')
       }
     },

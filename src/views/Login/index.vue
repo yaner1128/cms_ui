@@ -30,6 +30,8 @@ import { defineComponent, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { loadByUsername } from '@/api/login'
 import { getAllMenuList } from '@/api/menu'
+import Layout from '@/views/Layout/index.vue'
+import { RouteRecordRaw } from 'node_modules/vue-router/dist/vue-router'
 
 const rules = reactive({
   username: [
@@ -50,6 +52,33 @@ export default defineComponent({
       password: '',
       rememberMe: false
     })
+    const handleRoute = (arr: string | any[], temp: any) => {
+      for (let i = 0; i < arr.length; i++) {
+        if (Array.isArray(arr[i].children) && arr[i].children.length > 0) {
+          temp.push({
+            name: arr[i].permissionName,
+            path: arr[i].permissionUrl,
+            component: () => import(`@/views${arr[i].vueFileUrl}/index.vue`),
+            redirect: '',
+            meta: {
+              isShow: arr[i].isShow !== '否'
+            },
+            children: []
+          })
+          handleRoute(arr[i].children, temp[i].children)
+        } else {
+          temp.push({
+            name: arr[i].permissionName,
+            path: arr[i].permissionUrl,
+            component: () => import(`@/views${arr[i].vueFileUrl}/index.vue`),
+            redirect: '',
+            meta: {
+              isShow: arr[i].isShow !== '否'
+            }
+          })
+        }
+      }
+    }
     // 表单校验
     const refForm = ref()
     const login = () => {
@@ -66,8 +95,27 @@ export default defineComponent({
             getAllMenuList('').then(res => {
               $store.commit('setMenu', res.data.data)
               localStorage.setItem('menu', JSON.stringify(res.data.data))
+              const handleRoueEvent = () => {
+                $store.commit('setMenu', $store.state.menu)
+                const temp: any[] = []
+                const menuData = $store.state.menu
+                handleRoute(menuData, temp)
+                console.log(temp)
+                for (let i = 0; i < temp.length; i++) {
+                  if (temp[i].children) {
+                    const name = temp[i].name
+                    router.addRoute({ name: temp[i].name, path: temp[i].path, component: Layout })
+                    temp[i].children.forEach((item: RouteRecordRaw) => {
+                      router.addRoute(name, item)
+                    })
+                  } else {
+                    router.addRoute(temp[i])
+                  }
+                }
+                $store.commit('setTemp', temp)
+              }
+              router.push({ path: '/home', replace: true })
             })
-            router.push({ path: '/home', replace: true })
           }).catch(() => {
             loading.value = false
             ElMessage.error('请输入正确的用户名/密码！')
@@ -94,6 +142,7 @@ export default defineComponent({
   background: url('../../assets/back.jpg') no-repeat 100%;
   background-size:1920px 1080px;
   position: relative;
+  overflow: hidden;
   .loginForm{
     padding: 50px;
     box-sizing: border-box;

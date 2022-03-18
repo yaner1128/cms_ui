@@ -229,7 +229,7 @@ export default defineComponent({
               })
               data.fileList = []
               setTimeout(() => {
-                router.push({ path: '/project', replace: true })
+                router.push({ path: '/project/projectList', replace: true })
               }, 1500)
             } else {
               ElMessage.warning(res.data.message)

@@ -9,7 +9,6 @@
       <el-table-column prop="operator" label="财务经办人" />
       <el-table-column prop="amount" label="附件">
         <template #default="scope">
-          <!-- <span class="fileItem" @click="exportClick(scope.row.basAttachments[0].attachUrl)">{{ scope.row.basAttachments[0]?.attachmentName }}</span> -->
           <ul>
             <li class="fileItem" v-for="item in scope.row.basAttachments" :key="item">
               <span class="fileItem" @click="exportClick(item.attachUrl)">{{ item.attachmentName }}</span>
@@ -79,8 +78,8 @@ import { defineComponent, onMounted, reactive, ref, toRefs } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { format } from '@/utils/dateFormat'
 import handleFd from '@/utils/formData'
-import store from '@/store'
 import { removeEnclosure } from '@/api/attLibrary'
+import exportClick from '@/utils/export'
 
 const rules = reactive({
   paymentDate: [{ required: true, message: '请选择付款日期', trigger: 'change' }],
@@ -108,13 +107,6 @@ export default defineComponent({
       fileList: ref<any[]>([]),
       editDialog: false,
       curentTitle: '新增',
-      exportClick: (attachUrl: string) => {
-        const url = `/file/downloadFile?savePath=${attachUrl}`
-        const iframe = document.createElement('iframe')
-        iframe.src = url
-        iframe.style.display = 'none'
-        document.body.appendChild(iframe)
-      },
       changeVal: (val: any) => {
         editForm.value.paymentDate = format(new Date(val), 'yyyy-MM-dd')
       },
@@ -211,7 +203,7 @@ export default defineComponent({
       })
     }
     return {
-      rules, ...resData, paymentPlan, editForm, handleFileChange, beforeRemove
+      rules, ...resData, paymentPlan, editForm, handleFileChange, beforeRemove, exportClick
     }
   }
 })

@@ -99,6 +99,7 @@ import { getUserList } from '@/api/created'
 import handleFd from '@/utils/formData'
 import store from '@/store'
 import { removeEnclosure } from '@/api/attLibrary'
+import exportClick from '@/utils/export'
 
 const rules = reactive({
   contractCode: [{ required: true, message: '请输入合同编码', trigger: 'blur' }],
@@ -126,13 +127,6 @@ export default defineComponent({
       editDialog: false,
       file: '', // 附件
       fileList: ref<any[]>([]),
-      exportClick: (attachUrl: string) => {
-        const url = `/file/downloadFile?savePath=${attachUrl}`
-        const iframe = document.createElement('iframe')
-        iframe.src = url
-        iframe.style.display = 'none'
-        document.body.appendChild(iframe)
-      },
       changeDate: (val: any) => {
         editForm.value.signDate = format(new Date(val), 'yyyy-MM-dd')
       },
@@ -265,7 +259,7 @@ export default defineComponent({
     }
 
     return {
-      rules, ...resData, purchaseData, editForm, ownerList, refForm, commitEditClick, handleFileChange, beforeRemove
+      rules, ...resData, purchaseData, editForm, ownerList, refForm, commitEditClick, handleFileChange, beforeRemove, exportClick
     }
   }
 })

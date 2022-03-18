@@ -11,7 +11,7 @@ export function AddPaymentPlan (data: any) {
 // 修改
 export function modifyPaymentPlan (data: any) {
   return request({
-    url: '/ctms-project/prjPaymentPlan/modifyPaymentPlan',
+    url: '/ctms-project/prjPaymentPlan/updatePaymentPlan',
     method: 'post',
     data
   })

@@ -94,11 +94,12 @@
               accept="image/*,.pdf"
               action=""
               :file-list="fileList"
+              :on-preview="fileClick"
               :on-change="handleFileChange"
               :before-remove="beforeRemove"
               :auto-upload="false"
               >
-              <el-button type="text">上传附件</el-button>
+              <el-button type="text" v-show="isEdit">上传附件</el-button>
             </el-upload>
           </li>
         </ul>
@@ -139,6 +140,8 @@ import myUpLoad from '@/components/upload.vue'
 import { format } from '@/utils/dateFormat'
 import { removeEnclosure } from '@/api/attLibrary'
 import store from '@/store'
+import exportClick from '@/utils/export'
+import handleFd from '@/utils/formData'
 
 interface stepListType {
   title: string
@@ -165,16 +168,13 @@ export default defineComponent({
     }
   },
   setup () {
+    // 判断是否带参数
+    const query = {
+      isEdit: router.currentRoute.value.query.flag === 'true',
+      id: Number(router.currentRoute.value.query.id)
+    }
     const data = reactive({
       fileList: ref<any[]>([]),
-      exportClick: (attachUrl: string) => {
-        const url = `/file/downloadFile?savePath=${attachUrl}`
-        const iframe = document.createElement('iframe')
-        // iframe.Authorization = 'Bearer ' + localStorage.getItem('token')
-        iframe.src = url
-        iframe.style.display = 'none'
-        document.body.appendChild(iframe)
-      },
       deleteClick: (attachmentId: number) => {
         removeEnclosure(attachmentId).then((res: any) => {
           if (res.data.code === 200) {
@@ -204,7 +204,8 @@ export default defineComponent({
       const params = Object.assign({}, query)
       getDetails(params).then(res => {
         detailObj.value = res.data.data
-        res.data.data.basAttachments.forEach((item: { attachmentName: string; attachUrl: string; attachmentId: number }) => {
+        const basAttachments = res.data.data.basAttachments || []
+        basAttachments.forEach((item: { attachmentName: string; attachUrl: string; attachmentId: number }) => {
           data.fileList.push({
             name: item.attachmentName,
             url: item.attachUrl,
@@ -212,6 +213,8 @@ export default defineComponent({
           })
         })
       })
+    }
+    const getSelectData = () => {
       const promise1 = getUserList()
       const promise2 = getProducts()
       const promise3 = getProjectOverview({ id: query.id })
@@ -223,11 +226,8 @@ export default defineComponent({
         planList.value = detaileVo.value.prjContractsVOList[0]?.prjPaymentPlanVOList
       })
     }
-    // 判断是否带参数
-    const query = {
-      isEdit: router.currentRoute.value.query.flag === 'true',
-      id: Number(router.currentRoute.value.query.id)
-    }
+    getSelectData()
+    getData(query)
     const isEdit = ref<boolean>(false)
     onMounted(() => {
       if (query && query.id) {
@@ -244,15 +244,17 @@ export default defineComponent({
     // 编辑状态下点击提交
     const commitClick = () => {
       isEdit.value = false
-      console.log(detailObj.value)
-      updateDetails(detailObj.value).then(res => {
+      updateDetails(handleFd(detailObj.value)).then(res => {
         if (res.data.code === 200) {
           ElMessage.success('编辑成功')
+          getData(query)
         }
       })
     }
     // 附件
-    // 附件上传
+    const fileClick = (file: { url: string }) => {
+      exportClick(file.url)
+    }
     const handleFileChange = (file: any, fileList: any) => {
       const templist = ref<any[]>([])
       fileList.forEach((item: { raw: any }) => {
@@ -263,6 +265,9 @@ export default defineComponent({
       detailObj.value.file = templist.value
     }
     const beforeRemove = (file: any, fileList: any) => {
+      if (!query.isEdit) {
+        return false
+      }
       ElMessageBox.confirm('确认删除该附件吗?', '提示', {
         confirmButtonText: '确认',
         cancelButtonText: '取消',
@@ -279,7 +284,7 @@ export default defineComponent({
     }
 
     return {
-      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, handleFileChange, beforeRemove
+      ...resData, detaileVo, stepList, ownerList, productList, detailObj, planList, isEdit, commitClick, handleFileChange, beforeRemove, fileClick
     }
   }
 })

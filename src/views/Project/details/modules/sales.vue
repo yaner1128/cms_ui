@@ -45,11 +45,12 @@
           accept="image/*,.pdf"
           action=""
           :file-list="fileList"
+          :on-preview="fileClick"
           :on-change="handleFileChange"
           :before-remove="beforeRemove"
           :auto-upload="false"
           >
-          <el-button type="text">上传附件</el-button>
+          <el-button type="text" v-show="isEdit">上传附件</el-button>
         </el-upload>
       </el-form-item>
     </el-form>
@@ -75,6 +76,7 @@ import { getUserList } from '@/api/created'
 import { removeEnclosure } from '@/api/attLibrary'
 import { format } from '@/utils/dateFormat'
 import handleFd from '@/utils/formData'
+import exportClick from '@/utils/export'
 
 const rules = reactive({
   contractCode: [{ required: true, message: '请输入合同编码', trigger: 'blur' }],
@@ -120,13 +122,6 @@ export default defineComponent({
       fileList: ref<any[]>([]),
       dateChange: (val: any, code: string) => {
         salesData.value[code] = format(new Date(val), 'yyyy-MM-dd')
-      },
-      exportClick: (attachUrl: string) => {
-        const url = `/file/downloadFile?savePath=${attachUrl}`
-        const iframe = document.createElement('iframe')
-        iframe.src = url
-        iframe.style.display = 'none'
-        document.body.appendChild(iframe)
       },
       deleteClick: (attachmentId: number) => {
         removeEnclosure(attachmentId).then((res: any) => {
@@ -195,6 +190,10 @@ export default defineComponent({
       })
     }
     // 附件上传
+    // 附件
+    const fileClick = (file: { url: string }) => {
+      exportClick(file.url)
+    }
     const handleFileChange = (file: any, fileList: any) => {
       const templist = ref<any[]>([])
       fileList.forEach((item: { raw: any }) => {
@@ -220,7 +219,7 @@ export default defineComponent({
       })
     }
     return {
-      rules, ...resData, salesData, fileList, ownerList, formRef, commitClick, handleFileChange, beforeRemove
+      rules, ...resData, salesData, fileList, ownerList, formRef, commitClick, handleFileChange, beforeRemove, fileClick
     }
   }
 })

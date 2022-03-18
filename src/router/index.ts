@@ -186,12 +186,16 @@ router.beforeEach((to, from, next) => {
     handleRoueEvent()
     next({ ...to, replace: true })
   }
-  if (to.path !== '/login' && !Cookies.get('ctms-web')) {
-    next({ path: '/login' })
-    ElMessage.error('登录过期, 请重新登录!')
-  } else {
-    handleRoueEvent()
+  if (to.path === '/login') {
     next()
+  } else {
+    if (to.path !== '/login' && !Cookies.get('ctms-web')) {
+      next({ path: '/login' })
+      ElMessage.error('登录过期, 请重新登录!')
+    } else {
+      handleRoueEvent()
+      next()
+    }
   }
 })
 
